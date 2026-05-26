@@ -1,0 +1,8 @@
+{
+  "name": "{{BOT_NAME}}",
+  "version": "DRAFT",
+  "description": "Q in Connect passthrough bot ({{BOT_NAME}})",
+  "errorLogSettings": null,
+  "dataPrivacy": {"childDirected": false},
+  "idleSessionTTLInSeconds": 300
+}

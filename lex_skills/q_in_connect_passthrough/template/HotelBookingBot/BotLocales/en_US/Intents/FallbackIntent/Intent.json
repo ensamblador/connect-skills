@@ -1,0 +1,18 @@
+{
+  "name": "FallbackIntent",
+  "displayName": null,
+  "description": "Default intent when no other intent matches",
+  "parentIntentSignature": "AMAZON.FallbackIntent",
+  "sampleUtterances": null,
+  "intentConfirmationSetting": null,
+  "intentClosingSetting": null,
+  "inputContexts": null,
+  "outputContexts": null,
+  "kendraConfiguration": null,
+  "qnAIntentConfiguration": null,
+  "bedrockAgentIntentConfiguration": null,
+  "qInConnectIntentConfiguration": null,
+  "dialogCodeHook": null,
+  "fulfillmentCodeHook": null,
+  "slotPriorities": []
+}

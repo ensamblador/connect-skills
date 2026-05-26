@@ -1,0 +1,26 @@
+{
+  "name": "q-in-connect-passthrough",
+  "version": "1.0.0",
+  "description": "Lex V2 bot that delegates every utterance to an Amazon Q in Connect assistant. Three locales (en_US, es_US, pt_BR) using Nova Sonic v2 unified speech.",
+  "templateDirectory": "template",
+  "templateBotDirectory": "HotelBookingBot",
+  "locales": ["en_US", "es_US", "pt_BR"],
+  "intents": ["AmazonQinConnect", "FallbackIntent"],
+  "parameters": {
+    "botName": {
+      "required": true,
+      "description": "Per-tenant Lex V2 bot name. Must be unique in the AWS account.",
+      "placeholder": "{{BOT_NAME}}"
+    },
+    "qAssistantArn": {
+      "required": true,
+      "description": "ARN of the Amazon Q in Connect (Wisdom) assistant the bot will delegate to.",
+      "placeholder": "{{Q_ASSISTANT_ARN}}",
+      "pattern": "^arn:aws:wisdom:[a-z0-9-]+:[0-9]{12}:assistant/[a-f0-9-]{36}$"
+    }
+  },
+  "alias": {
+    "name": "prod",
+    "description": "Stable alias used by Connect to invoke the bot."
+  }
+}

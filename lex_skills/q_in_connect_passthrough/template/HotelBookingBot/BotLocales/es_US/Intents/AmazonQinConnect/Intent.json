@@ -1,0 +1,54 @@
+{
+  "name": "AmazonQinConnect",
+  "displayName": null,
+  "description": "This intent leverages Amazon Q in Connect to fulfill requests or tasks.",
+  "parentIntentSignature": "AMAZON.QInConnectIntent",
+  "sampleUtterances": null,
+  "intentConfirmationSetting": null,
+  "intentClosingSetting": null,
+  "inputContexts": null,
+  "outputContexts": null,
+  "kendraConfiguration": null,
+  "qnAIntentConfiguration": null,
+  "bedrockAgentIntentConfiguration": null,
+  "qInConnectIntentConfiguration": {
+    "qInConnectAssistantConfiguration": {
+      "assistantArn": "{{Q_ASSISTANT_ARN}}"
+    }
+  },
+  "dialogCodeHook": null,
+  "fulfillmentCodeHook": {
+    "isActive": true,
+    "postFulfillmentStatusSpecification": {
+      "failureResponse": null,
+      "successResponse": {
+        "messageGroupsList": [
+          {
+            "message": {
+              "ssmlMessage": null,
+              "customPayload": null,
+              "plainTextMessage": {"value": "((x-amz-lex:q-in-connect-response))"},
+              "imageResponseCard": null
+            },
+            "variations": null
+          }
+        ],
+        "allowInterrupt": true
+      },
+      "successNextStep": {
+        "sessionAttributes": null,
+        "dialogAction": {
+          "type": "EndConversation",
+          "slotToElicit": null,
+          "suppressNextMessage": null,
+          "intentsInScope": null
+        },
+        "intent": null
+      },
+      "timeoutResponse": null
+    },
+    "fulfillmentUpdatesSpecification": null,
+    "enabled": false
+  },
+  "slotPriorities": []
+}

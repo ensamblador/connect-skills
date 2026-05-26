@@ -1,0 +1,12 @@
+graph LR
+    Start([Start]) --> SetVoice[Set voice<br/>Lupe / generative / es-US]
+    SetVoice -->|Success| Greet[Play prompt<br/>Bienvenido a ABC Bank.<br/>Por favor espere...]
+    SetVoice -->|Error| Greet
+
+    Greet -->|Success| SetQueue[Set working queue<br/>BasicQueue]
+    Greet -->|Error| SetQueue
+
+    SetQueue -->|Success| Transfer([Transfer to queue<br/>BasicQueue])
+    SetQueue -->|Error| Hangup([Disconnect / hang up])
+
+    Transfer -->|Error| Hangup

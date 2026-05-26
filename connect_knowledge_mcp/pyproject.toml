@@ -1,0 +1,13 @@
+[project]
+name = "connect-knowledge-mcp"
+version = "0.1.0"
+description = "MCP server exposing Amazon Connect research tools (docs, blogs, re:Post)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=1.14.0",
+    "connect-knowledge",
+]
+
+[tool.uv.sources]
+connect-knowledge = { path = "..", editable = true }
