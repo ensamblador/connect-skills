@@ -2,27 +2,48 @@
 
 A small kit for grounded Amazon Connect research and flow authoring.
 
-- **MCP server** (`connect_knowledge`) — six tools today:
+- **MCP server** (`connect_knowledge`) — eight tools today:
   - `search_docs`, `search_blogs`, `search_repost` — multi-source search
   - `get_block_doc`, `get_action_doc` — per-page deep dive (admin guide
     + Flow language reference)
+  - `get_view_component_doc` — per-component deep dive on the View
+    Dictionary Storybook (Playwright-driven, returns structured props)
   - `validate_flow_json` — structural validation against the Flow
     language grammar
+  - `validate_view_json` — structural validation against the
+    customer-managed View JSON schema
 - **Steering files** — generated catalogs the agent pulls in on demand:
   - `#connect-blocks` — every UI flow block, channel matrix, links
   - `#connect-flow-language` — Flow language grammar + every Action
     type, links to per-action reference pages
+  - `#connect-views` — every View Dictionary component (UI / FormView /
+    AWS-managed / Customer-managed) plus a curated index of admin-guide
+    pages on Views and step-by-step guides
 - **Kiro skills** — opinionated workflows on top of the above:
   - `connect-researcher` — multi-source research orchestrator
   - `connect-flow-author` — four-stage flow authoring (requirements →
     mermaid → JSON → deploy)
+  - `connect-view-author` — four-stage view authoring (requirements →
+    layout outline → JSON → deploy) for customer-managed views and
+    AWS-managed-view input shapes
+  - `connect-kb-author` — author Q in Connect knowledge base content
+  - `connect-ai-agent-author` — author Connect AI agents, prompts, and
+    tool wiring
   - `q-in-connect-bot-deploy` — deploy a parameterized Lex V2 bot from
-    `lex_skills/` (Q in Connect passthrough template, three locales,
-    Nova Sonic v2)
+    the skill's own `lex_skills/` template library (Q in Connect
+    passthrough template, three locales, Nova Sonic v2)
+  - `connect-iac-cdk-author` — author the full Connect deployment chain
+    as AWS CDK (Python) IaC (instance, Q in Connect, integrations,
+    flows/views, AI agents, security profiles), reusing existing
+    resources where present
+  - `mcp-gateway-author` — expose a REST API (API Gateway + Lambda +
+    DynamoDB) as MCP tools through a Bedrock AgentCore gateway; carries
+    deploy-tested reference constructs and an industry sample (telco)
+    with seed data
 
-The Python package under `src/connect_knowledge/` is the source of truth
-for search logic, page parsing, and validation, and also exposes the
-search functions as terminal CLIs.
+The Python package under `connect_knowledge_mcp/connect_knowledge/` is
+the source of truth for search logic, page parsing, and validation, and
+also exposes the search functions as terminal CLIs.
 
 Background and motivation: see
 [`2026-05-22_kiro-claude-code-amazon-connect-dev.md`](./2026-05-22_kiro-claude-code-amazon-connect-dev.md).
@@ -32,44 +53,83 @@ Background and motivation: see
 ```
 connect-skills/
 ├── README.md
-├── pyproject.toml
+├── pyproject.toml                  # path-depends on connect_knowledge_mcp; re-exposes the CLIs
 ├── .python-version
-├── src/
-│   └── connect_knowledge/        # search logic (used by MCP + CLIs)
+├── connect_knowledge_mcp/          # self-contained MCP server + its package
+│   ├── README.md
+│   ├── pyproject.toml              # builds the connect_knowledge package from this folder
+│   ├── connect_knowledge_mcp.py    # FastMCP("connect_knowledge") + 8 @mcp.tool()s
+│   └── connect_knowledge/          # search logic (used by MCP + CLIs)
 │       ├── __init__.py
 │       ├── docs.py            # aws_search
 │       ├── blogs.py           # aws_blog_search
 │       ├── repost.py          # aws_repost_search
 │       ├── page_doc.py        # get_block_doc, get_action_doc
+│       ├── view_doc.py        # get_view_component_doc (Playwright)
 │       ├── validator.py       # validate_flow_json
-│       ├── _action_types.py   # generated: VALID_ACTION_TYPES, ACTION_CATEGORY
+│       ├── view_validator.py  # validate_view_json
+│       ├── _action_types.py            # generated: VALID_ACTION_TYPES, ACTION_CATEGORY
+│       ├── _view_component_types.py    # generated: VALID_VIEW_COMPONENT_TYPES, REQUIRED_PROPS
 │       └── cli.py             # console-script entry points
-├── connect_knowledge_mcp/        # MCP server wrapping the search functions
-│   ├── README.md
-│   ├── pyproject.toml
-│   └── connect_knowledge_mcp.py  # FastMCP("connect_knowledge") + 6 @mcp.tool()s
-├── lex_skills/                # parameterized Lex V2 templates
-│   └── q_in_connect_passthrough/
-│       ├── README.md
-│       ├── skill.json         # parameter manifest
-│       └── template/          # Lex V2 import bundle (en_US, es_US, pt_BR)
-├── flows/                     # per-flow design + JSON artifacts (created by connect-flow-author)
-│   └── <flow-name>/
-│       ├── design.md
-│       ├── flow.mmd
-│       └── flow.json
-├── scripts/
-│   ├── refresh_connect_blocks.py         # rebuilds the block-catalog steering file
-│   ├── refresh_connect_flow_language.py  # rebuilds the flow-language steering file
-│   └── deploy_lex_skill.py               # renders + deploys a lex_skills/ template
+├── projects/                       # concrete deliverables, grouped by tenant / industry
+│   ├── telco-cx/
+│   │   ├── knowledge_bases/telco-kb-es/
+│   │   ├── connect_ai_agents/telco-selfservice-es-us/
+│   │   ├── flows/{telco-agent-screenpop-es,telco-selfservice-es-inbound,init-flow-es}/
+│   │   └── views/telco-escalation-handoff/
+│   ├── abc-bank/
+│   │   └── flows/abc-bank-spanish-welcome/
+│   └── _samples/                   # reusable, project-agnostic examples
+│       └── flows/escalate-to-agent/
 └── .kiro/
+    ├── settings/mcp.json           # registers the connect_knowledge MCP server
+    ├── hooks/                      # self-contained: definitions + the scripts they run
+    │   ├── refresh-connect-blocks.kiro.hook
+    │   ├── refresh-connect-flow-language.kiro.hook
+    │   ├── refresh-connect-views.kiro.hook
+    │   ├── refresh-connect-ai-agents.kiro.hook
+    │   ├── refresh-aws-workshops.kiro.hook
+    │   ├── refresh-system-prompts.kiro.hook
+    │   └── scripts/
+    │       ├── _doc_fetcher.py                 # shared fetch helper
+    │       ├── refresh_connect_blocks.py       # rebuilds the block-catalog steering file
+    │       ├── refresh_connect_flow_language.py  # rebuilds the flow-language steering file
+    │       ├── refresh_connect_views.py        # rebuilds the view-dictionary catalog
+    │       ├── refresh_connect_ai_agents.py    # refreshes the AI-agents steering file
+    │       ├── refresh_aws_workshops.py        # refreshes the workshops steering file
+    │       └── refresh_system_prompts.py       # re-dumps the system AI prompts
     ├── steering/
-    │   ├── connect-blocks.md          # generated, ~55 UI blocks (use `#connect-blocks`)
-    │   └── connect-flow-language.md   # generated, grammar + ~56 actions (use `#connect-flow-language`)
-    └── skills/
+    │   ├── connect-blocks.md             # generated, ~55 UI blocks (use `#connect-blocks`)
+    │   ├── connect-flow-language.md      # generated, grammar + ~56 actions (use `#connect-flow-language`)
+    │   ├── connect-views.md              # generated catalog + admin-guide index (use `#connect-views`)
+    │   ├── connect-view-patterns.md      # paste-and-edit view JSON patterns (use `#connect-view-patterns`)
+    │   ├── connect-ai-agents.md          # AI-agents reference (use `#connect-ai-agents`)
+    │   └── aws-workshops.md              # workshops index (use `#aws-workshops`)
+    └── skills/                     # self-contained: each skill carries its own code
         ├── connect-researcher/SKILL.md
         ├── connect-flow-author/SKILL.md
-        └── q-in-connect-bot-deploy/SKILL.md
+        ├── connect-kb-author/SKILL.md
+        ├── connect-ai-agent-author/SKILL.md
+        ├── connect-view-author/
+        │   ├── SKILL.md
+        │   └── scripts/
+        │       ├── deploy_connect_view.py                # deploys a customer-managed view
+        │       └── refresh_connect_view_component_types.py  # regenerates _view_component_types.py
+        ├── connect-iac-cdk-author/        # author Connect IaC as AWS CDK (Python)
+        │   ├── SKILL.md
+        │   └── scripts/                   # e.g. secrets_scan.py guardrail
+        ├── mcp-gateway-author/            # API Gateway → AgentCore → MCP tools
+        │   ├── SKILL.md
+        │   ├── reference/                 # deploy-tested CDK constructs to adapt
+        │   └── samples/telco/             # rich OpenAPI + DynamoDB seed data
+        └── q-in-connect-bot-deploy/
+            ├── SKILL.md
+            ├── scripts/deploy_lex_skill.py   # renders + deploys a lex_skills/ template
+            └── lex_skills/                   # parameterized Lex V2 templates
+                └── q_in_connect_passthrough/
+                    ├── README.md
+                    ├── skill.json            # parameter manifest
+                    └── template/             # Lex V2 import bundle (en_US, es_US, pt_BR)
 ```
 
 ## Prerequisites
@@ -84,18 +144,46 @@ From the repository root:
 
 ```bash
 uv sync                                           # installs the search package
-uv sync --directory connect_knowledge_mcp            # installs the MCP server
+uv sync --directory connect_knowledge_mcp            # installs the MCP server + Playwright
 ```
 
 The MCP project depends on the parent package as an editable install,
-so any change to `src/connect_knowledge/` flows through without a
-reinstall.
+so any change to `connect_knowledge_mcp/connect_knowledge/` flows
+through without a reinstall.
+
+Playwright is a **core dependency** of the MCP server (the
+`get_view_component_doc` tool needs it), so a plain
+`uv sync --directory connect_knowledge_mcp` installs it automatically.
+The Python package is not enough on its own, though — Playwright needs
+a Chromium browser binary, which is a separate one-time download:
+
+```bash
+uv run --directory connect_knowledge_mcp python -m playwright install chromium  # ~140 MB
+```
+
+Run that once after the sync. Without it, `get_view_component_doc`
+raises a clear "browser not installed" error; the other seven tools
+work regardless.
+
+### Optional: `boto3` for the deploy scripts
+
+The skill deploy scripts (`deploy_lex_skill.py`, `deploy_connect_view.py`)
+need `boto3`, declared as an optional `deploy` extra so the default
+install stays slim. The deploy scripts pull it in on demand via
+`uv run --with boto3`, so you normally don't need to install it
+explicitly. To bake it into the MCP venv instead:
+
+```bash
+uv sync --directory connect_knowledge_mcp --extra deploy
+```
 
 ## Configure the MCP server in `mcp.json`
 
-Two of the three skills (`connect-researcher` and `connect-flow-author`)
-call MCP tools, so the server has to be registered with your MCP
-client first.
+Several skills (`connect-researcher`, `connect-flow-author`, and
+`connect-view-author`) call `connect_knowledge` MCP tools, so that
+server has to be registered with your MCP client first. The CDK skills
+(`connect-iac-cdk-author`, `mcp-gateway-author`) additionally use the
+`cdk_docs` MCP server for construct lookups.
 
 ### Kiro
 
@@ -126,7 +214,9 @@ Add the `connect_knowledge` entry:
         "search_repost",
         "get_block_doc",
         "get_action_doc",
-        "validate_flow_json"
+        "get_view_component_doc",
+        "validate_flow_json",
+        "validate_view_json"
       ]
     }
   }
@@ -139,9 +229,11 @@ your machine. Kiro reconnects MCP servers automatically on config save
 in the Kiro feature panel.
 
 Verify by typing `@` (or whatever attaches a tool in your client) in
-chat — the six `connect_knowledge` tools (`search_docs`,
+chat — the eight `connect_knowledge` tools (`search_docs`,
 `search_blogs`, `search_repost`, `get_block_doc`, `get_action_doc`,
-`validate_flow_json`) should appear under the server.
+`get_view_component_doc`, `validate_flow_json`, `validate_view_json`)
+should appear under the server. `get_view_component_doc` needs the
+Chromium browser binary — see [Install](#install).
 
 ### Claude Desktop
 
@@ -208,9 +300,11 @@ server registered, paste this prompt to Kiro:
 > the new server entry into the existing `mcpServers` object without
 > touching other servers; if it does not exist, create the file with
 > just this entry. Do not modify `~/.kiro/settings/mcp.json`. The
-> entry should set `disabled: false` and auto-approve all six tools:
+> entry should set `disabled: false` and auto-approve all eight tools:
 > `search_docs`, `search_blogs`, `search_repost`, `get_block_doc`,
-> `get_action_doc`, `validate_flow_json`. After writing, confirm the
+> `get_action_doc`, `get_view_component_doc`, `validate_flow_json`,
+> `validate_view_json`.
+> After writing, confirm the
 > file path and the server entry shape, and tell me to verify the
 > tools appear in the MCP Servers panel.
 
@@ -231,13 +325,15 @@ What this prompt is enforcing, and why:
   be configured. Preserve them.
 - **Don't touch user-global config.** Workspace setup should never
   modify `~/.kiro/settings/`.
-- **Auto-approve all six tools.** The search and per-page tools are
-  read-only against public AWS surfaces; the validator is pure
-  in-memory. No reason for an approval prompt every call.
+- **Auto-approve all eight tools.** The search and per-page tools are
+  read-only against public AWS surfaces, the View Dictionary
+  component fetcher is read-only against the public Storybook, and
+  the validators are pure in-memory. No reason for an approval prompt
+  every call.
 
 ## Skills
 
-Three skills live under `.kiro/skills/`. Workspace skills are picked
+Eight skills live under `.kiro/skills/`. Workspace skills are picked
 up automatically when you open this repo in Kiro. To use any skill
 globally across every workspace:
 
@@ -285,7 +381,8 @@ detail when needed, and validates every JSON deliverable with
 
 Use when designing or critically reviewing a contact flow — anything
 that would otherwise involve hand-writing Flow language JSON. Each
-flow's deliverables go in `flows/<flow-name>/`:
+flow's deliverables go under the owning project, e.g.
+`projects/<project>/flows/<flow-name>/`:
 
 - `design.md` — spec + Mermaid diagram + block-to-Action mapping
 - `flow.mmd` — standalone Mermaid source
@@ -299,19 +396,85 @@ plus rules for [flow modules](https://docs.aws.amazon.com/connect/latest/admingu
 and the [contact initiation methods](https://docs.aws.amazon.com/connect/latest/adminguide/contact-initiation-methods.html)
 matrix.
 
+### `connect-view-author`
+
+Four-stage workflow for designing and producing Amazon Connect views
+(customer-managed view templates and AWS-managed-view input shapes):
+requirements capture → layout outline → view JSON → deployment guidance.
+
+Pulls in `#connect-views` (component catalog + admin-guide topic
+index) and `#connect-view-patterns` (paste-and-edit JSON patterns)
+automatically. Uses `get_view_component_doc` for per-component prop
+detail when needed, and validates every JSON deliverable with
+`validate_view_json` before handing it back. Hands off to
+`connect-flow-author` when the design also needs a host flow.
+
+Use when designing the screen an agent (or end customer in chat)
+sees during a contact — anything that would otherwise involve
+hand-writing a customer-managed view template or the Set JSON input
+to an AWS-managed view. Each view's deliverables go under the owning
+project, e.g. `projects/<project>/views/<view-name>/`:
+
+- `view-design.md` — spec + layout outline + component-to-data mapping
+- `view.json` — validated view template (the Template field of CreateView Content)
+- `view-content.json` — the deploy envelope ({ Template, Actions })
+
 ### `q-in-connect-bot-deploy`
 
-Four-stage workflow for deploying a Lex V2 bot from the
+Four-stage workflow for deploying a Lex V2 bot from the skill's own
 `lex_skills/` template library: gather parameters → dry-run →
 deploy → verify.
 
-Uses `scripts/deploy_lex_skill.py` to render the template, upload,
-import, build, version, alias, and (optionally) associate with an
-Amazon Connect instance.
+Uses `.kiro/skills/q-in-connect-bot-deploy/scripts/deploy_lex_skill.py`
+to render the template, upload, import, build, version, alias, and
+(optionally) associate with an Amazon Connect instance.
 
 Use when the user asks to stand up or update a Q in Connect-backed
 Lex bot. Not for designing flows (that's `connect-flow-author`) or
 authoring custom Lex bots from scratch.
+
+### `connect-iac-cdk-author`
+
+Guidance (not a generator) for authoring the full Amazon Connect
+deployment chain as AWS CDK (Python) Infrastructure-as-Code: a backend
+REST API with Lambdas and DynamoDB, a Bedrock AgentCore gateway that
+exposes it as an MCP server, the Connect instance, a Q in Connect
+domain/assistant and knowledge base, instance integrations (MCP / Lex /
+Lambda), flows and views, AI agents/prompts/guardrails/tools, and
+security profiles. Pulls in the `#cdk-connect`, `#cdk-lex`,
+`#cdk-q-in-connect`, `#cdk-agentcore`, and `#cdk-iac` steering catalogs
+and the `cdk_docs` MCP tools for construct lookups.
+
+Built around a **reuse-before-create** pattern: when a resource (Connect
+instance, AgentCore gateway, Q in Connect domain, …) already exists and
+its id is supplied, the constructs reference it instead of provisioning
+a new one. CDK projects live under
+`projects/<project>/<project>-cdk/`.
+
+Use when standing up or extending a Connect environment as code, or
+wrapping the outputs of the artifact-authoring skills in a CDK stack.
+Consumes those skills' outputs (flow.json, view.json, agent bodies, KB
+docs, Lex bundles) rather than re-authoring them.
+
+### `mcp-gateway-author`
+
+Focused, deploy-tested companion to `connect-iac-cdk-author` for one
+chain: a REST API (API Gateway + Lambda + DynamoDB) exposed as MCP tools
+through a Bedrock AgentCore gateway. Covers the two target types (native
+API Gateway vs inline OpenAPI), the API Gateway method conventions the
+gateway requires (`method_responses` + `operation_name`), authoring a
+rich OpenAPI schema, API-key auth wiring (one Secrets Manager secret
+feeding both API Gateway and the AgentCore credential provider), the
+`CfnGateway`/`CfnGatewayTarget` constructs, the JWT inbound authorizer,
+and a checklist of deploy gotchas. Pulls in `#cdk-agentcore` and
+`#cdk-iac`.
+
+Ships **reference constructs** to adapt (`reference/`) and an industry
+**sample** (`samples/telco/`: a rich OpenAPI plus DynamoDB seed data).
+More industry samples can be added under `samples/<industry>/`.
+
+Use when the user wants to turn a backend API into MCP tools a Connect
+AI agent can call.
 
 ## CLIs (optional, for terminal use)
 
@@ -350,8 +513,8 @@ The file is generated by joining two upstream pages:
 ### Refresh
 
 ```bash
-uv run python scripts/refresh_connect_blocks.py            # write
-uv run python scripts/refresh_connect_blocks.py --dry-run  # preview
+uv run python .kiro/hooks/scripts/refresh_connect_blocks.py            # write
+uv run python .kiro/hooks/scripts/refresh_connect_blocks.py --dry-run  # preview
 ```
 
 The script reads the markdown source of both pages (AWS publishes
@@ -401,9 +564,9 @@ as the block catalog.
 ### Refresh
 
 ```bash
-uv run python scripts/refresh_connect_flow_language.py                    # write (crawls per-action pages)
-uv run python scripts/refresh_connect_flow_language.py --dry-run          # preview
-uv run python scripts/refresh_connect_flow_language.py --skip-descriptions  # quick refresh, blank descriptions
+uv run python .kiro/hooks/scripts/refresh_connect_flow_language.py                    # write (crawls per-action pages)
+uv run python .kiro/hooks/scripts/refresh_connect_flow_language.py --dry-run          # preview
+uv run python .kiro/hooks/scripts/refresh_connect_flow_language.py --skip-descriptions  # quick refresh, blank descriptions
 ```
 
 The full refresh fetches ~60 pages (5 index pages + 1 per action) with
@@ -414,8 +577,9 @@ crawl.
 
 ## Lex skills library
 
-`lex_skills/` is a library of parameterized Lex V2 import bundles.
-Today it contains one template:
+`.kiro/skills/q-in-connect-bot-deploy/lex_skills/` is a library of
+parameterized Lex V2 import bundles, shipped inside the
+`q-in-connect-bot-deploy` skill. Today it contains one template:
 
 - **`q_in_connect_passthrough`** — three-locale (`en_US`, `es_US`,
   `pt_BR`) Lex V2 bot using Nova Sonic v2 unified speech, with two
@@ -439,7 +603,7 @@ use, call the deploy script directly:
 
 ```bash
 # Dry-run: render and zip the bundle, no AWS calls
-uv run --with boto3 python scripts/deploy_lex_skill.py \
+uv run --with boto3 python .kiro/skills/q-in-connect-bot-deploy/scripts/deploy_lex_skill.py \
     --skill q_in_connect_passthrough \
     --bot-name AcmeQPassthroughBot \
     --q-assistant-arn arn:aws:wisdom:us-east-1:111122223333:assistant/<id> \
@@ -447,7 +611,7 @@ uv run --with boto3 python scripts/deploy_lex_skill.py \
     --dry-run
 
 # Real deploy
-uv run --with boto3 python scripts/deploy_lex_skill.py \
+uv run --with boto3 python .kiro/skills/q-in-connect-bot-deploy/scripts/deploy_lex_skill.py \
     --skill q_in_connect_passthrough \
     --bot-name AcmeQPassthroughBot \
     --q-assistant-arn arn:aws:wisdom:us-east-1:111122223333:assistant/<id> \
@@ -463,9 +627,66 @@ and optionally calls `connect.associate_bot` to wire the alias into
 a Connect instance.
 
 Final `botId`, `botVersion`, and `aliasArn` are printed as JSON on
-stdout. See `lex_skills/q_in_connect_passthrough/README.md` for the
-template-specific details and the round-trip workflow for editing
-the template via the Lex console.
+stdout. See
+`.kiro/skills/q-in-connect-bot-deploy/lex_skills/q_in_connect_passthrough/README.md`
+for the template-specific details and the round-trip workflow for
+editing the template via the Lex console.
+
+## Customer-managed view deploy
+
+`.kiro/skills/connect-view-author/scripts/deploy_connect_view.py` is the
+deploy helper for views authored by `connect-view-author`. It validates
+the view JSON locally, renders the deploy envelope (the
+`{ "Template": "<stringified>", "Actions": [...] }` shape that
+`CreateView` and `UpdateViewContent` expect), then either creates
+the view or updates it in place if a view with the same name
+already exists, and finally publishes an immutable numbered version
+via `CreateViewVersion`.
+
+The `connect-view-author` skill is the recommended path — it walks
+the four-stage workflow conversationally. For automation or
+scripted use, call the script directly:
+
+```bash
+# Dry-run: validate locally and render view-content.json, no AWS calls
+uv run --with boto3 python .kiro/skills/connect-view-author/scripts/deploy_connect_view.py \
+    --view-file projects/<project>/views/customer-escalation/view.json \
+    --view-name CustomerEscalation \
+    --actions Submit,Cancel \
+    --artifact-dir projects/<project>/views/customer-escalation \
+    --dry-run
+
+# Real deploy
+uv run --with boto3 python .kiro/skills/connect-view-author/scripts/deploy_connect_view.py \
+    --view-file projects/<project>/views/customer-escalation/view.json \
+    --view-name CustomerEscalation \
+    --actions Submit,Cancel \
+    --instance-id <connect-instance-id> \
+    --region us-east-1 \
+    --version-description "Initial release"
+```
+
+Notable behaviors:
+
+- Always validates the view template with `validate_view_json`
+  before any AWS call. A failed validation aborts with exit code 2
+  and prints every issue to stderr.
+- Idempotent create: passes a `ClientToken` derived from the
+  template content + view name, so re-running with unchanged
+  inputs reuses the same token.
+- Auto-detects update vs create: lists views in the instance and
+  switches to `UpdateViewContent` when a view with the given name
+  exists.
+- `--status PUBLISHED` (default) triggers Connect's full server-side
+  validation. Use `--status SAVED` for in-progress drafts.
+- `--publish-version` (default) calls `CreateViewVersion` after
+  create/update so the Show view block has a numbered version to
+  pin to. `--no-publish-version` skips it for drafts.
+
+Final `viewId`, `viewArn`, `publishedVersion`, and
+`viewContentSha256` are printed as JSON on stdout — paste the ARN
+plus version into the host flow's Show view block as
+`Parameters.ViewToken`.
 
 ## Future tools
 

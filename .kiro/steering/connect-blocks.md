@@ -1,6 +1,6 @@
 ---
 inclusion: manual
-last_refreshed: 2026-05-24
+last_refreshed: 2026-06-05
 block_count: 55
 source_urls:
   - https://docs.aws.amazon.com/connect/latest/adminguide/contact-block-definitions.html
@@ -12,7 +12,7 @@ content_checksum: sha256:3701e6a9bfb9afeb
 
 Quick lookup table for every flow block in Amazon Connect, joined from
 the two source pages below. Refresh with
-``uv run python scripts/refresh_connect_blocks.py``.
+``uv run python .kiro/hooks/scripts/refresh_connect_blocks.py``.
 
 **Activation:** this file is opt-in. Reference it from chat with
 `#connect-blocks` when you're sketching a flow, picking blocks for a
@@ -21,7 +21,7 @@ mermaid diagram, or generating Flow language JSON.
 **Freshness rule (for the agent):** before relying on this catalog,
 compare the `last_refreshed` date in the front matter with today's
 date. If the file is older than 7 days, run
-``uv run python scripts/refresh_connect_blocks.py`` to refresh it
+``uv run python .kiro/hooks/scripts/refresh_connect_blocks.py`` to refresh it
 before answering. Always refresh when the user explicitly asks for it.
 A regenerated file with no diff is fine — `last_refreshed` is the only
 thing that needs updating, and the script handles that automatically.

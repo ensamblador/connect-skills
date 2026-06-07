@@ -1,0 +1,503 @@
+openapi: 3.0.1
+info:
+  title: Telco Self-Service API
+  description: >
+    SAMPLE rich OpenAPI for a telco self-service backend: mobile plan catalog,
+    customer account lookup (by id, phone, or email), balance inquiry, and
+    support case management. Exposed to a Connect AI agent as MCP tools through
+    a Bedrock AgentCore gateway. Copy this into apis/openapi/openapi.yaml and
+    adapt for your domain.
+  version: 2.0.0
+  contact:
+    name: telco-cx
+
+# Server URL is a TEMPLATE rendered at deploy time. ${ApiId} and ${Stage} are
+# substituted (CloudFormation Fn::Sub) with the real deployed REST API id and
+# stage; ${AWS::Region} is the deploy region pseudo-parameter. Do NOT hardcode
+# a host — the rendered spec is what the gateway uses.
+servers:
+  - url: https://${ApiId}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+    description: Deployed Telco self-service API Gateway endpoint
+
+tags:
+  - name: Accounts
+    description: Customer account profile, balance, and phone/email lookup
+  - name: Plans
+    description: Mobile plan catalog operations
+  - name: Support
+    description: Support case (ticket) operations
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /accounts:
+    get:
+      operationId: getAccountByPhone
+      summary: Look up a customer account by phone number
+      description: >
+        Find a customer's telco account by their mobile phone number (E.164
+        format, e.g. +12065550101). Use this when the customer is identified by
+        phone rather than account id. Returns the full account profile.
+      tags: [Accounts]
+      parameters:
+        - name: phoneNumber
+          in: query
+          required: true
+          description: The customer's phone number in E.164 format.
+          schema:
+            type: string
+          example: '+12065550101'
+      responses:
+        '200':
+          description: The matching account profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          description: Missing phoneNumber query parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No account found for the supplied phone number.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /accounts/by-email:
+    get:
+      operationId: getAccountByEmail
+      summary: Look up a customer account by email address
+      description: >
+        Find a customer's telco account by their email address. Use this when
+        the customer is identified by email rather than account id or phone.
+        Returns the full account profile. NOTE the literal `by-email` path
+        segment — a separate operationId is required because /accounts (GET) is
+        already taken by getAccountByPhone, and the literal segment takes
+        routing priority over the {accountId} sibling.
+      tags: [Accounts]
+      parameters:
+        - name: email
+          in: query
+          required: true
+          description: The customer's email address.
+          schema:
+            type: string
+            format: email
+          example: maria.gonzalez@example.com
+      responses:
+        '200':
+          description: The matching account profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          description: Missing email query parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No account found for the supplied email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /accounts/{accountId}:
+    get:
+      operationId: getAccount
+      summary: Get a customer account profile
+      description: >
+        Retrieve a customer's telco account profile by account id, including
+        plan id, account status, balance, currency, and contact details.
+      tags: [Accounts]
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          description: The unique telco account identifier.
+          schema:
+            type: string
+          example: acct-1001
+      responses:
+        '200':
+          description: The account profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          description: Missing or invalid accountId.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No account found for the supplied accountId.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /accounts/{accountId}/balance:
+    get:
+      operationId: getAccountBalance
+      summary: Get a customer's current balance
+      description: >
+        Get the current outstanding balance, currency, and payment due date for
+        a telco account by account id. Use this for "how much do I owe" or "when
+        is my bill due" questions.
+      tags: [Accounts]
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          description: The unique telco account identifier.
+          schema:
+            type: string
+          example: acct-1001
+      responses:
+        '200':
+          description: The account's current balance.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accountId, balance, currency]
+                properties:
+                  accountId:
+                    type: string
+                    example: acct-1001
+                  balance:
+                    type: number
+                    description: Current outstanding balance.
+                    example: 42.5
+                  currency:
+                    type: string
+                    example: USD
+                  dueDate:
+                    type: string
+                    format: date
+                    example: '2026-06-20'
+        '404':
+          description: No account found for the supplied accountId.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /plans:
+    get:
+      operationId: listPlans
+      summary: List mobile plans
+      description: >
+        List the available mobile plans, optionally filtered by a minimum data
+        allowance in GB (minGb). Use this to recommend plans, e.g. "plans with
+        at least 25 GB". Results are ordered by data allowance ascending.
+      tags: [Plans]
+      parameters:
+        - name: minGb
+          in: query
+          required: false
+          description: Only return plans with at least this many GB of data.
+          schema:
+            type: number
+          example: 25
+      responses:
+        '200':
+          description: The matching plans.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [plans, count]
+                properties:
+                  plans:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Plan'
+                  count:
+                    type: integer
+                    example: 2
+        '400':
+          description: minGb was not a valid number.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /plans/{planId}:
+    get:
+      operationId: getPlan
+      summary: Get a mobile plan's details
+      description: >
+        Get the full details of a single mobile plan by plan id, including data
+        allowance, monthly price, and included features.
+      tags: [Plans]
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          description: The unique plan identifier.
+          schema:
+            type: string
+          example: plan-plus
+      responses:
+        '200':
+          description: The plan details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+        '404':
+          description: No plan found for the supplied planId.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /support:
+    post:
+      operationId: openCase
+      summary: Open a support case
+      description: >
+        Open a new support case (ticket) for a customer who is experiencing a
+        problem. Provide the customerId and a short subject; optionally a
+        category, description, and priority. Returns the created case with its
+        generated caseId and status.
+      tags: [Support]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customerId, subject]
+              properties:
+                customerId:
+                  type: string
+                  description: The customer the case is opened for.
+                  example: cust-5001
+                subject:
+                  type: string
+                  description: Short summary of the problem.
+                  example: Slow data speeds at home
+                category:
+                  type: string
+                  enum: [billing, network, device, account, other]
+                  description: Problem category.
+                  example: network
+                description:
+                  type: string
+                  description: Detailed description of the problem.
+                  example: Speeds drop below 1 Mbps every evening.
+                priority:
+                  type: string
+                  enum: [low, medium, high]
+                  description: Case priority.
+                  example: medium
+      responses:
+        '201':
+          description: The created support case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '400':
+          description: Missing required fields or invalid category.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      operationId: listCustomerCases
+      summary: List a customer's support cases
+      description: >
+        List all support cases for a customer by customerId. Use this to check a
+        customer's existing tickets before opening a new one or to report
+        status.
+      tags: [Support]
+      parameters:
+        - name: customerId
+          in: query
+          required: true
+          description: The customer whose cases to list.
+          schema:
+            type: string
+          example: cust-5003
+      responses:
+        '200':
+          description: The customer's support cases.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [customerId, cases, count]
+                properties:
+                  customerId:
+                    type: string
+                    example: cust-5003
+                  cases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Case'
+                  count:
+                    type: integer
+                    example: 1
+        '400':
+          description: Missing customerId query parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /support/{caseId}:
+    get:
+      operationId: getCase
+      summary: Get a support case
+      description: Get the status and details of a single support case by case id.
+      tags: [Support]
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          description: The unique case identifier.
+          schema:
+            type: string
+          example: case-9001
+      responses:
+        '200':
+          description: The case details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '404':
+          description: No case found for the supplied caseId.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+  schemas:
+    Account:
+      type: object
+      required: [accountId, customerId, name, phoneNumber, planId, status]
+      properties:
+        accountId:
+          type: string
+          example: acct-1001
+        customerId:
+          type: string
+          description: Customer identifier (used for support cases).
+          example: cust-5001
+        name:
+          type: string
+          example: María González
+        phoneNumber:
+          type: string
+          description: Phone number in E.164 format.
+          example: '+12065550101'
+        planId:
+          type: string
+          description: The plan the account is subscribed to.
+          example: plan-unlimited
+        status:
+          type: string
+          enum: [active, suspended, closed]
+          example: active
+        balance:
+          type: number
+          example: 42.5
+        currency:
+          type: string
+          example: USD
+        dueDate:
+          type: string
+          format: date
+          example: '2026-06-20'
+        email:
+          type: string
+          format: email
+          example: maria.gonzalez@example.com
+    Plan:
+      type: object
+      required: [planId, name, dataGb, monthlyPrice]
+      properties:
+        planId:
+          type: string
+          example: plan-plus
+        name:
+          type: string
+          example: Telco Plus
+        dataGb:
+          type: number
+          description: High-speed data allowance in GB.
+          example: 25
+        monthlyPrice:
+          type: number
+          example: 45.0
+        currency:
+          type: string
+          example: USD
+        unlimitedCalls:
+          type: boolean
+          example: true
+        hotspot:
+          type: boolean
+          description: Whether mobile hotspot is included.
+          example: true
+        description:
+          type: string
+          example: 25 GB high-speed data with mobile hotspot, unlimited talk and text.
+    Case:
+      type: object
+      required: [caseId, customerId, subject, status]
+      properties:
+        caseId:
+          type: string
+          example: case-9001
+        customerId:
+          type: string
+          example: cust-5003
+        subject:
+          type: string
+          example: No mobile data after plan suspension
+        category:
+          type: string
+          enum: [billing, network, device, account, other]
+          example: billing
+        description:
+          type: string
+          example: Customer reports no data connectivity.
+        priority:
+          type: string
+          enum: [low, medium, high]
+          example: high
+        status:
+          type: string
+          enum: [open, in_progress, resolved, closed]
+          example: open
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-06-01T14:30:00Z'
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          example: account acct-1001 not found

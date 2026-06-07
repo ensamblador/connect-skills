@@ -6,14 +6,15 @@ description: Deploy an Amazon Lex V2 bot from this repo's `lex_skills/` template
 # Q in Connect Lex bot deploy
 
 You are a deployment assistant for the parameterized Lex V2 templates
-under `lex_skills/`. Today the only template is
+under this skill's `lex_skills/` folder. Today the only template is
 `q_in_connect_passthrough` — a three-locale bot (`en_US`, `es_US`,
 `pt_BR`) using Nova Sonic v2 unified speech, with two intents per
 locale: `AmazonQinConnect` (built on `AMAZON.QInConnectIntent`,
 delegates every utterance to a Q in Connect assistant) and
 `FallbackIntent`.
 
-The actual deploy is run by `scripts/deploy_lex_skill.py`, which
+The actual deploy is run by
+`.kiro/skills/q-in-connect-bot-deploy/scripts/deploy_lex_skill.py`, which
 walks the standard Lex V2 import path (`CreateUploadUrl` →
 presigned `PUT` → `StartImport` → poll → `BuildBotLocale` per
 locale → `CreateBotVersion` → `CreateBotAlias`) and optionally
@@ -44,7 +45,8 @@ Do **not** use this skill for:
 
 Before stage 1, confirm:
 
-1. The repo is checked out and `scripts/deploy_lex_skill.py` is
+1. The repo is checked out and
+   `.kiro/skills/q-in-connect-bot-deploy/scripts/deploy_lex_skill.py` is
    present.
 2. The user has AWS credentials configured for the target account
    and region. If not, stop and ask them to set up `aws configure`
@@ -93,7 +95,7 @@ parameter substitution errors and lets the user inspect the
 rendered template before any AWS-side work.
 
 ```bash
-uv run --with boto3 python scripts/deploy_lex_skill.py \
+uv run --with boto3 python .kiro/skills/q-in-connect-bot-deploy/scripts/deploy_lex_skill.py \
     --skill q_in_connect_passthrough \
     --bot-name <BOT_NAME> \
     --q-assistant-arn <Q_ASSISTANT_ARN> \
@@ -120,7 +122,7 @@ before running, especially if `--connect-instance-id` is set
 (that step changes the Connect instance's bot routing).
 
 ```bash
-uv run --with boto3 python scripts/deploy_lex_skill.py \
+uv run --with boto3 python .kiro/skills/q-in-connect-bot-deploy/scripts/deploy_lex_skill.py \
     --skill q_in_connect_passthrough \
     --bot-name <BOT_NAME> \
     --q-assistant-arn <Q_ASSISTANT_ARN> \
@@ -169,7 +171,15 @@ Once the script returns, verify the deploy:
    — confirms the alias is `Available`.
 2. (If associated) `aws connect list-bots --instance-id <id> --lex-version V2 --max-results 50`
    — confirms the bot appears in the Connect instance's bot list.
-3. End-to-end: place a test contact through a flow that uses the
+3. `aws lexv2-models list-tags-for-resource --resource-arn arn:aws:lex:<region>:<acct>:bot/<botId>`
+   — confirms `AmazonConnectEnabled` is set to **`True`** (capital T).
+   The script stamps this automatically. The value is case-sensitive:
+   the Connect admin bot-management page (`/bots/details/<botId>`)
+   returns 403 ("The Conversational AI bot does not have the required
+   tag set") for `true` or any other casing, even though the flow
+   dropdown and runtime accept it. If a user reports that 403, this
+   tag value is the first thing to check.
+4. End-to-end: place a test contact through a flow that uses the
    bot, or use the Lex V2 console's Test panel to send an utterance
    and verify the Q in Connect response comes back.
 
@@ -181,15 +191,15 @@ anything without the user's go.
 If the user wants to *change* what the template produces (different
 intents, slots, locales, speech model), this skill is the wrong
 place — that's editing source under
-`lex_skills/q_in_connect_passthrough/template/`. The README in that
-folder explains the round-trip: import → console edit → export →
-drop back into `template/`, preserving the `{{BOT_NAME}}` and
-`{{Q_ASSISTANT_ARN}}` placeholders.
+`.kiro/skills/q-in-connect-bot-deploy/lex_skills/q_in_connect_passthrough/template/`.
+The README in that folder explains the round-trip: import → console
+edit → export → drop back into `template/`, preserving the
+`{{BOT_NAME}}` and `{{Q_ASSISTANT_ARN}}` placeholders.
 
 ## Failure modes
 
-- `scripts/deploy_lex_skill.py` not found → stop, ask the user to
-  pull the latest repo.
+- `.kiro/skills/q-in-connect-bot-deploy/scripts/deploy_lex_skill.py`
+  not found → stop, ask the user to pull the latest repo.
 - AWS credentials missing or wrong region → don't try to silently
   fall back; surface the error and ask.
 - Q in Connect assistant ARN doesn't exist → script fails at
@@ -211,7 +221,8 @@ drop back into `template/`, preserving the `{{BOT_NAME}}` and
   cite.
 - Do not skip the dry-run. The dry-run is fast and cheap; the real
   deploy takes 5–15 minutes and changes a live system.
-- Do not modify the template under `lex_skills/<name>/template/`
+- Do not modify the template under
+  `.kiro/skills/q-in-connect-bot-deploy/lex_skills/<name>/template/`
   inside this skill. That's a separate workflow (see "Updating the
   template itself").
 - Do not chase Connect instance association if the user only asked

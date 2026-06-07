@@ -314,6 +314,33 @@ Three common paths:
 If the artifact is a flow module, the deploy choices above still
 apply, but consider:
 
+- **Module content needs a `Settings` block.** Unlike a regular flow,
+  flow-module content must include a top-level `Settings` object with
+  `InputParameters`, `OutputParameters`, and `Transitions` (the custom
+  Return branches the module exposes to callers). Omitting it fails
+  `create-contact-flow-module` with `"JSON field is missing or null
+  for field name: settings"`. Minimal form:
+  ```json
+  "Settings": {
+    "InputParameters": [],
+    "OutputParameters": [],
+    "Transitions": [
+      { "DisplayName": "Success", "ReferenceName": "Success", "Description": "" }
+    ]
+  }
+  ```
+- **Terminate with `EndFlowModuleExecution`** (the Return block), not
+  `DisconnectParticipant`. It is restricted to flow modules and ends
+  the module without ending the contact.
+- **Deploy API is separate.** `create-contact-flow-module` /
+  `update-contact-flow-module-content` (not `create-contact-flow`).
+  The invoking flow references the module by ID via an
+  `InvokeFlowModule` Action — which is supported **only in Inbound
+  flow types**.
+- **Modules can't read flow-local data of the caller** (External, Lex,
+  Customer Profiles, Connect AI agents attributes, stored input). They
+  *can* read contact system attributes like `$.Channel`, so a
+  channel-branching init module works without input parameters.
 - **Versioning.** Module versions are immutable snapshots. Publish a
   new version after every change you want to roll forward; never
   edit a published version in place.
@@ -322,6 +349,17 @@ apply, but consider:
   letting `$LATEST` flow through during early development. The
   invoking flow references the module by alias, not by raw version
   ID, so flipping the alias is the rollout primitive.
+
+**Worked example — a channel-aware init module.** A common, reusable
+unit is "enable logging + set the right recording/analytics behavior
+for the contact's channel." The recording block
+(`UpdateContactRecordingAndAnalyticsBehavior`) accepts **one** channel
+behavior object per call (`VoiceBehavior` OR `ChatBehavior`), so a
+hard-coded voice block throws `ChannelMismatch` on a chat contact.
+Extracting a module that branches on `$.Channel` (uppercase: `VOICE` /
+`CHAT` / `TASK`) and sets the matching behavior solves this once for
+all host flows. See `projects/telco-cx/flows/init-flow-es/` for a validated, deployed
+example invoked from `projects/telco-cx/flows/telco-selfservice-es-inbound/`.
 
 ### Agent-initiated chat flow extra step
 

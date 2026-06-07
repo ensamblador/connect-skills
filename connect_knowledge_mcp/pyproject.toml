@@ -6,8 +6,33 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "mcp[cli]>=1.14.0",
-    "connect-knowledge",
+    "requests>=2.31",
+    "beautifulsoup4>=4.12",
+    # Playwright drives get_view_component_doc and the --with-props
+    # view refresh. It is a hard dependency of the MCP server (one of
+    # the eight tools needs it), so it must be installed by a plain
+    # `uv run` / `uv sync` — the way mcp.json launches the server.
+    # The Chromium browser binary is a separate one-time download:
+    #   uv run --directory connect_knowledge_mcp python -m playwright install chromium
+    "playwright>=1.46",
 ]
 
-[tool.uv.sources]
-connect-knowledge = { path = "..", editable = true }
+[project.optional-dependencies]
+# boto3 is only used by the skill deploy scripts (deploy_lex_skill.py,
+# deploy_connect_view.py), not by the MCP server itself, so it stays
+# optional. Install with: uv sync --directory connect_knowledge_mcp --extra deploy
+deploy = [
+    "boto3>=1.34",
+]
+
+[project.scripts]
+connect-docs-search = "connect_knowledge.cli:docs_main"
+connect-blog-search = "connect_knowledge.cli:blogs_main"
+connect-repost-search = "connect_knowledge.cli:repost_main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["connect_knowledge"]

@@ -9,11 +9,13 @@ exposes them as MCP tools over stdio:
     - search_repost  → repost.aws (Connect-tagged community Q&A)
 
     Per-page deep-dive:
-    - get_block_doc   → admin-guide flow-block page (parsed)
-    - get_action_doc  → API-reference flow-language action page (parsed)
+    - get_block_doc          → admin-guide flow-block page (parsed)
+    - get_action_doc         → API-reference flow-language action page (parsed)
+    - get_view_component_doc → View Dictionary component (Playwright)
 
     Authoring:
     - validate_flow_json → check Flow language JSON against the grammar
+    - validate_view_json → check customer-managed View JSON against the schema
 
 Future tools (not implemented yet, tracked in README):
 
@@ -31,6 +33,8 @@ from connect_knowledge import aws_blog_search, aws_repost_search, aws_search
 from connect_knowledge.page_doc import get_action_doc as _get_action_doc
 from connect_knowledge.page_doc import get_block_doc as _get_block_doc
 from connect_knowledge.validator import validate_flow_json as _validate_flow_json
+from connect_knowledge.view_doc import get_view_component_doc as _get_view_component_doc
+from connect_knowledge.view_validator import validate_view_json as _validate_view_json
 
 mcp = FastMCP("connect_knowledge")
 
@@ -172,7 +176,7 @@ def get_action_doc(slug: str) -> dict[str, Any]:
             reference page, e.g. ``interactions-invokelambdafunction``,
             ``contact-actions-tagcontact``,
             ``flow-control-actions-loop``. The slug is the URL stem
-            under ``/connect/latest/APIReference/``. You can find it
+            under ``/connect/latest/devguide/``. You can find it
             from the link in the ``connect-flow-language`` steering
             catalog.
 
@@ -185,6 +189,46 @@ def get_action_doc(slug: str) -> dict[str, Any]:
         ``raw_sections`` map.
     """
     return _get_action_doc(slug)
+
+
+@mcp.tool()
+def get_view_component_doc(
+    slug: str,
+    capture_html: bool = False,
+) -> dict[str, Any]:
+    """Fetch a View Dictionary component docs page (props + description).
+
+    Drives a headless Chromium via Playwright to render the Storybook
+    docs page and extract a structured props table. Use this when you
+    are authoring a customer-managed view template, wiring a Show view
+    block, or building a Form, and the one-line entries in the
+    ``connect-views`` steering catalog are not enough.
+
+    Args:
+        slug: The Storybook story id of the component, e.g.
+            ``ui-component-datepicker--with-all``,
+            ``formview-component-datepicker--with-all``,
+            ``ui-component-attributebar--with-attributes``. You can
+            find the slug from the link in the ``connect-views``
+            steering catalog (it's the bit after ``?path=/docs/``).
+        capture_html: When ``True``, also return the rendered
+            ``#docs-root`` subtree as ``docs_html``. Off by default to
+            keep responses small.
+
+    Returns:
+        Dict with ``slug``, ``url``, ``title``, ``description``,
+        ``props`` (list of ``{name, required, description,
+        type_summary, default_summary}``), ``required_props`` and
+        ``optional_props`` (names only), and optionally ``docs_html``.
+
+    Setup:
+        Playwright is a core dependency of the MCP server, so a plain
+        ``uv sync --directory connect_knowledge_mcp`` installs it.
+        The Chromium browser binary is a separate one-time download::
+
+            uv run --directory connect_knowledge_mcp python -m playwright install chromium
+    """
+    return _get_view_component_doc(slug, capture_html=capture_html)
 
 
 @mcp.tool()
@@ -214,6 +258,41 @@ def validate_flow_json(json_str: str) -> dict[str, Any]:
         category name lookup).
     """
     return _validate_flow_json(json_str)
+
+
+@mcp.tool()
+def validate_view_json(json_str: str) -> dict[str, Any]:
+    """Validate Amazon Connect customer-managed View JSON.
+
+    Checks structural rules for a view's ``Content`` payload (the
+    body of ``CreateView`` / ``UpdateView``): top-level shape
+    (``Template`` / ``Actions``), ``Template.Head`` /
+    ``Template.Body`` shape, per-component required fields (``_id``,
+    ``Type``, ``Props``), ``_id`` uniqueness across the view,
+    ``Type`` against the known catalog, ``Content`` shape, required
+    props per Type, and cross-checks between component
+    ``Props.Action`` references and the top-level ``Actions`` list.
+
+    Per-component ``Props`` schemas are NOT fully validated here
+    (only required-prop names) — use ``get_view_component_doc`` for
+    the canonical Props shape per component, including descriptions,
+    type summaries, and defaults.
+
+    Args:
+        json_str: The view ``Content`` JSON as a string. The runtime
+            requires real JSON — the canonical docs example uses
+            ``//`` comments for narration; remove them before
+            validating.
+
+    Returns:
+        Dict with ``valid`` (bool), ``error_count``,
+        ``warning_count``, ``issues`` (list of ``{severity, path,
+        message}``), ``summary`` (str), and ``component_hierarchies``
+        (``_id`` → list of View Dictionary hierarchies the Type is
+        documented under, useful for sanity-checking FormView
+        components).
+    """
+    return _validate_view_json(json_str)
 
 
 if __name__ == "__main__":

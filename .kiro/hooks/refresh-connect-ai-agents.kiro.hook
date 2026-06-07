@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Refresh Connect AI Agents",
+  "description": "Re-fetches the 18 Connect AI agent admin-guide source pages, compares each against the source_checksums map in .kiro/steering/connect-ai-agents.md, and bumps last_refreshed. Unlike the other refresh hooks, this steering file is hand-curated prose — the script detects upstream drift and reports which pages changed so the prose can be re-curated, but does not auto-rewrite the body.",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "uv run python .kiro/hooks/scripts/refresh_connect_ai_agents.py",
+    "timeout": 300
+  },
+  "workspaceFolderName": "connect-skills",
+  "shortName": "refresh-connect-ai-agents"
+}

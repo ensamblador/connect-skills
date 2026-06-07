@@ -1,0 +1,24 @@
+{
+  "Items": [
+    {
+      "caseId": {"S": "case-9001"},
+      "customerId": {"S": "cust-5003"},
+      "subject": {"S": "No mobile data after plan suspension"},
+      "category": {"S": "billing"},
+      "status": {"S": "open"},
+      "priority": {"S": "high"},
+      "createdAt": {"S": "2026-06-01T14:30:00Z"},
+      "description": {"S": "Customer reports no data connectivity; account is suspended for non-payment."}
+    },
+    {
+      "caseId": {"S": "case-9002"},
+      "customerId": {"S": "cust-5001"},
+      "subject": {"S": "Slow speeds in downtown area"},
+      "category": {"S": "network"},
+      "status": {"S": "in_progress"},
+      "priority": {"S": "medium"},
+      "createdAt": {"S": "2026-06-03T09:15:00Z"},
+      "description": {"S": "Customer experiences degraded speeds during peak hours near zip 98101."}
+    }
+  ]
+}

@@ -4,9 +4,9 @@ MCP server that exposes the `connect_knowledge` Python tools as tools any
 MCP client can call (Kiro, Claude Desktop, Claude Code, Strands, custom
 agents).
 
-The server is a thin wrapper around the search functions already in
-[`../src/connect_knowledge`](../src/connect_knowledge). One process, stdio
-transport, three tools today.
+The server is a thin wrapper around the search functions in the
+[`connect_knowledge`](connect_knowledge) package that ships in this same
+folder. One process, stdio transport, eight tools today.
 
 ## Tools
 
@@ -17,7 +17,9 @@ transport, three tools today.
 | `search_repost` | `repost.aws` (Connect-tagged) — debugging, community Q&A, edge cases |
 | `get_block_doc` | Parsed admin-guide flow-block reference page (channels, properties, etc.) |
 | `get_action_doc` | Parsed Flow language action reference page (parameter object, errors, etc.) |
+| `get_view_component_doc` | Rendered View Dictionary component docs page (props table, description) — Playwright-driven (core dep), needs the Chromium binary |
 | `validate_flow_json` | Structural validation of Flow language JSON against the grammar |
+| `validate_view_json` | Structural validation of customer-managed View JSON against the schema |
 
 ### Future tools
 
@@ -37,9 +39,21 @@ From this directory:
 uv sync
 ```
 
-That installs `mcp[cli]` plus the parent `connect-knowledge` package as an
-editable dependency, so any changes to the underlying search functions
-flow through without a reinstall.
+That installs `mcp[cli]`, `requests`, `beautifulsoup4`, and
+`playwright` (all core dependencies), and builds the
+`connect_knowledge` package that lives in this folder, so any changes
+to the underlying search functions flow through without a reinstall.
+
+`get_view_component_doc` additionally needs the Chromium browser
+binary that Playwright drives — a separate one-time download:
+
+```bash
+uv run python -m playwright install chromium     # ~140 MB
+```
+
+The other seven tools work without it. `boto3` (used only by the
+skill deploy scripts, not the server) is an optional `deploy` extra:
+`uv sync --extra deploy`.
 
 ## Run
 
@@ -155,10 +169,11 @@ threads.
 connect_knowledge_mcp/
 ├── README.md              # this file
 ├── .python-version        # 3.11
-├── pyproject.toml         # mcp[cli] + editable parent
+├── pyproject.toml         # mcp[cli] + builds the local connect_knowledge package
 ├── main.py                # placeholder (mirrors reference repo)
-└── connect_knowledge_mcp.py  # FastMCP server, three @mcp.tool()s
+├── connect_knowledge/     # search/parse/validate package (source of truth)
+└── connect_knowledge_mcp.py  # FastMCP server, eight @mcp.tool()s
 ```
 
-The actual search logic lives in `../src/connect_knowledge/`. This
-directory is the MCP adapter only.
+The actual search logic lives in `connect_knowledge/`, shipped alongside
+this server. This directory is the MCP adapter plus its package.
