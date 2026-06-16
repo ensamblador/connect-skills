@@ -1,6 +1,6 @@
 ---
 inclusion: manual
-last_refreshed: 2026-06-05
+last_refreshed: 2026-06-07
 workshop_count: 13
 source_urls:
   - https://catalog.workshops.aws/self-service-ai-agents/en-US

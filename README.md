@@ -331,6 +331,54 @@ What this prompt is enforcing, and why:
   the validators are pure in-memory. No reason for an approval prompt
   every call.
 
+#### Same prompt for the `cdk_docs` server
+
+The CDK skills (`connect-iac-cdk-author`, `mcp-gateway-author`) also
+use the `cdk_docs` MCP server. Register it the same way — paste this
+prompt to Kiro:
+
+> Set up the `cdk_docs` MCP server in this workspace's
+> `.kiro/settings/mcp.json`. Resolve the absolute path to the
+> `cdk_docs_mcp/` directory by locating it under this repo (search
+> from the workspace root). Use the absolute path to the `uv` binary
+> on this machine — find it with `command -v uv`, do not assume a
+> fixed location. If `.kiro/settings/mcp.json` already exists, merge
+> the new server entry into the existing `mcpServers` object without
+> touching other servers; if it does not exist, create the file with
+> just this entry. Do not modify `~/.kiro/settings/mcp.json`. The
+> entry should set `disabled: false` and auto-approve both tools:
+> `search_cdk_docs`, `get_cdk_construct_doc`.
+> After writing, confirm the file path and the server entry shape, and
+> tell me to verify the tools appear in the MCP Servers panel.
+
+The same rationale applies (workspace scope, dynamic `uv` and project
+path resolution, merge-don't-overwrite, no user-global edits). Both
+`cdk_docs` tools are read-only lookups against the public AWS CDK API
+reference, so auto-approving them avoids an approval prompt every call.
+The resulting entry looks like:
+
+```json
+{
+  "mcpServers": {
+    "cdk_docs": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "/absolute/path/to/connect-skills/cdk_docs_mcp",
+        "python",
+        "cdk_docs_mcp.py"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "search_cdk_docs",
+        "get_cdk_construct_doc"
+      ]
+    }
+  }
+}
+```
+
 ## Skills
 
 Eight skills live under `.kiro/skills/`. Workspace skills are picked

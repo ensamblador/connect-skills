@@ -9,3 +9,10 @@ build/
 .ruff_cache/
 .mypy_cache/
 .DS_Store
+# === Node / Vite (website) ===
+node_modules/
+dist/
+*.local
+.env
+.env.*
+.kiro/specs/
