@@ -401,3 +401,91 @@ shapes and you don't need full control over the layout grid. Default
 to **customer-managed** (patterns 1–4) when you need a layout AWS
 templates don't support, dynamic component visibility (UI conditions),
 or reuse across views.
+
+
+## Customer-facing chat views (hosted communications widget)
+
+A `Show view` block can render a customer-managed view inside the
+**hosted Amazon Connect chat widget** (not just the agent workspace) —
+see the admin-guide `step-by-step-guides-chat` page. But the widget's
+renderer supports a **much smaller component set** than the agent
+workspace, and this is **not documented** anywhere in AWS docs. Learned
+empirically (telco-cx new-line plan picker):
+
+### What renders in the chat widget
+
+- ✅ `TextBox` (read-only text) and plain `Button` (with an `Action`),
+  composed inside a single top-level `Container`.
+- ❌ `Dropdown`, `FormInput`, `TextArea`, `SubmitButton`, the `Form`
+  FormView component, and `ButtonGroup` — these either render an empty
+  box or fail with **"Something went wrong. Ensure your inputs are
+  valid"** / **"…Try again later."** The same view renders fine in the
+  agent workspace; the customer widget just can't draw form inputs.
+
+**Pattern for a chat self-service choice form:** don't use a `Form` +
+`Dropdown`. Use one `Button` per option inside a `Container`, each with
+its own `Action` (e.g. `plan-basic`, `plan-plus`), then branch the
+`ShowView` block on `$.Views.Action`. Collect any free-text fields
+(area code, notes) conversationally through the AI agent instead of a
+text input. Replicate the proven shape: a single `Container`
+(`Columns: ["12"]`) holding a `TextBox` heading + the option buttons.
+
+### Other chat ShowView gotchas
+
+- **Pin a numbered view version, not `:$LATEST`.** The customer widget
+  reliably renders an explicit published version
+  (`…/view/<id>:3`); `$LATEST` (the mutable draft pointer) is flaky for
+  the customer participant. Publish with `create_view_version` and
+  reference that number from the flow.
+- **ViewData keys must match the view's InputSchema exactly.** The
+  runtime rejects ViewData keys that aren't in the schema (error:
+  "Ensure your inputs are valid"). After removing a component's
+  `DefaultValue`/binding from the view, also remove the matching key
+  from the flow's `ShowView` `ViewData`, or the extra key fails
+  validation. Connect title-cases the first letter of ViewData keys, so
+  a flow key `planOptions` is read in the template as `$.PlanOptions`.
+- **A `Dropdown`'s `DefaultValue` is typed `string[]`.** Passing an
+  empty string (`""`) for it fails schema validation — pass `[]`/omit,
+  or wrap a real value as a one-element array.
+- **`ShowView` egress shows `Timeout`, not the client error.** When the
+  widget fails to render, the customer never responds, so the flow log
+  shows the `ShowView` block timing out — the actual "something went
+  wrong" is client-side. Don't chase it as a flow/data bug; isolate by
+  pointing the block at a dummy `TextBox`+`Button` view to confirm the
+  renderer works, then add components back one at a time.
+- **The local `validate_view_json` is not the server schema.** It
+  passed a `ButtonGroup` shape the live `UpdateViewContent` rejected.
+  The server (`CreateView`/`UpdateViewContent`) is authoritative —
+  deploy to a `SAVED`/`PUBLISHED` draft to catch server-schema gaps.
+
+## Returning control to the AI agent after a ShowView (chat)
+
+When a chat `ShowView` hands back to a Q in Connect AI agent, do **not**
+route into the main self-service entry block — that starts a fresh
+agent turn and the agent **re-greets** ("¡Hola …! ¿En qué puedo
+ayudarle?") instead of continuing. Instead route to a
+`ConnectParticipantWithLexBot` block with a
+`LexInitializationData.InitialMessage` (e.g. `[NUEVA_LINEA] El cliente
+seleccionó un plan…`). The init message is fed to the agent as input,
+so it acts on it (continues the task) rather than greeting.
+
+To pass the view's result to the agent, write it into the **Q in
+Connect session** (so it surfaces as `$.Custom.<key>` in the
+orchestration prompt), not just a contact attribute. A small generic
+Lambda that calls `qconnect:update_session_data` with whatever
+key/values the flow passes is reusable for any future field — resolve
+the session ARN via `connect:describe_contact` →
+`Contact.WisdomInfo.SessionArn`. Reference the key in the prompt's
+`<customer_info>` block as `{{$.Custom.<key>}}`.
+
+## Passing contactAttributes from a hosted widget (frontend)
+
+`amazon_connect('contactAttributes', obj)` captures the **object
+reference** and reads it when the chat session starts. To update an
+attribute (e.g. the logged-in email) before the customer opens the
+chat, **mutate the same object** —
+`window._connectContactAttrs.email = email` — rather than re-calling
+`amazon_connect('contactAttributes', …)` or rebuilding the widget. The
+widget reads the live value at open time. The snippet prepends
+`HostedWidget-` to each key, so the flow reads it as
+`$.Attributes.HostedWidget-email`.

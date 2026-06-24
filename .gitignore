@@ -15,4 +15,6 @@ dist/
 *.local
 .env
 .env.*
+# Mantener versionada la plantilla de variables del website
+!.env.example
 .kiro/specs/
