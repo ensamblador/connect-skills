@@ -1,18 +1,18 @@
 ---
 inclusion: manual
-last_refreshed: 2026-06-05
-block_count: 55
+last_refreshed: 2026-09-10
+block_count: 58
 source_urls:
   - https://docs.aws.amazon.com/connect/latest/adminguide/contact-block-definitions.html
   - https://docs.aws.amazon.com/connect/latest/adminguide/block-support-by-channel.html
-content_checksum: sha256:3701e6a9bfb9afeb
+content_checksum: sha256:cf81879d6676d89e
 ---
 
 # Connect flow block catalog
 
 Quick lookup table for every flow block in Amazon Connect, joined from
 the two source pages below. Refresh with
-``uv run python .kiro/hooks/scripts/refresh_connect_blocks.py``.
+``uv run python .kiro/scripts/refresh_connect_blocks.py``.
 
 **Activation:** this file is opt-in. Reference it from chat with
 `#connect-blocks` when you're sketching a flow, picking blocks for a
@@ -21,7 +21,7 @@ mermaid diagram, or generating Flow language JSON.
 **Freshness rule (for the agent):** before relying on this catalog,
 compare the `last_refreshed` date in the front matter with today's
 date. If the file is older than 7 days, run
-``uv run python .kiro/hooks/scripts/refresh_connect_blocks.py`` to refresh it
+``uv run python .kiro/scripts/refresh_connect_blocks.py`` to refresh it
 before answering. Always refresh when the user explicitly asks for it.
 A regenerated file with no diff is fine — `last_refreshed` is the only
 thing that needs updating, and the script handles that automatically.
@@ -36,30 +36,33 @@ block name link. For the language and JSON shape see the
 
 | Block | Channels | Description |
 | --- | --- | --- |
+| [Agentic CX](https://docs.aws.amazon.com/connect/latest/adminguide/agentic-cx-block.html) | V+ C+ T~ E~ | Connects a contact to an Agentic CX Designer application. The block passes context variables into the application and routes the contact based on the exit condition the application returns. |
 | [Authenticate Customer](https://docs.aws.amazon.com/connect/latest/adminguide/authenticate-customer.html) | V~ C+ T~ E~ | Enables the customer to authenticate by using Amazon Cognito and Connect Customer Customer Profiles. |
-| [AWS Lambda function](https://docs.aws.amazon.com/connect/latest/adminguide/invoke-lambda-function-block.html) | V+ C+ T+ E+ | Calls AWS Lambda, optionally returns key-value pairs. |
+| [AWS Lambda function](https://docs.aws.amazon.com/connect/latest/adminguide/invoke-lambda-function-block.html) | V+ C+ T+ E+ | Calls AWS Lambda, and returns key-value pairs or JSON responses that can be used in a flow. |
 | [Call phone number](https://docs.aws.amazon.com/connect/latest/adminguide/call-phone-number.html) | V+ C~ T~ E~ | Initiates an outbound call from an outbound whisper flow. |
 | [Cases](https://docs.aws.amazon.com/connect/latest/adminguide/cases-block.html) | V+ C+ T+ E+ | Gets, updates, and creates cases. |
-| [Change routing priority / age](https://docs.aws.amazon.com/connect/latest/adminguide/change-routing-priority.html) | V+ C+ T+ E+ | Changes the priority of the contact in queue. You may want to do this, for example, based on the contact's issue or other variable. |
+| [Change routing priority / age](https://docs.aws.amazon.com/connect/latest/adminguide/change-routing-priority.html) | V+ C+ T+ E+ | Changes the priority of the contact in queue. You might want to do this, for example, based on the contact's issue or other variable. |
 | [Check call progress](https://docs.aws.amazon.com/connect/latest/adminguide/check-call-progress.html) | V+ C~ T~ E~ | Engages with the output provided by an answering machine, and provides branches to route the contact accordingly. This block works with outbound campaigns only. |
 | [Check contact attributes](https://docs.aws.amazon.com/connect/latest/adminguide/check-contact-attributes.html) | V+ C+ T+ E+ | Checks the values of contact attributes. |
 | [Check hours of operation](https://docs.aws.amazon.com/connect/latest/adminguide/check-hours-of-operation.html) | V+ C+ T+ E+ | Checks whether the contact is occurring within or outside of the hours of operation defined for the queue. |
 | [Check queue status](https://docs.aws.amazon.com/connect/latest/adminguide/check-queue-status.html) | V+ C+ T+ E+ | Checks the status of the queue based on specified conditions. |
 | [Check staffing](https://docs.aws.amazon.com/connect/latest/adminguide/check-staffing.html) | V+ C+ T+ E+ | Checks the current working queue, or queue you specify in the block, for whether agents are available, staffed, or online. Staffed availability could be on call, or after contact work status. |
 | [Check Voice ID](https://docs.aws.amazon.com/connect/latest/adminguide/check-voice-id.html) | V+ C~ T~ E~ | Branches based on the enrollment status, voice authentication status, or status of detection of fraudsters in a watchlist of the caller returned by Voice ID. |
-| [Connect assistant](https://docs.aws.amazon.com/connect/latest/adminguide/connect-assistant-block.html) | V+ C+ T~ E+ | Associates an Connect AI agents domain to a contact to enable real-time recommendations. |
+| [Connect assistant](https://docs.aws.amazon.com/connect/latest/adminguide/connect-assistant-block.html) | V+ C+ T~ E+ | Associates an AI agents domain to a contact to enable real-time recommendations. |
 | [Contact tags](https://docs.aws.amazon.com/connect/latest/adminguide/contact-tags-block.html) | V+ C+ T+ E+ | Create and apply user-defined tags (key:value pairs) to your contacts. |
 | [Create persistent contact association](https://docs.aws.amazon.com/connect/latest/adminguide/create-persistent-contact-association-block.html) | V~ C+ T~ E~ | Specify an attribute to create a persistent contact association, enabling conversations to continue from where they left off. |
 | [Create task](https://docs.aws.amazon.com/connect/latest/adminguide/create-task-block.html) | V+ C+ T+ E+ | Creates a new task, sets the tasks attributes, and initiates a contact flow to start the task. To learn more about Connect Customer Tasks, see [The task channel in Connect Customer](tasks.md). |
-| [Customer profiles](https://docs.aws.amazon.com/connect/latest/adminguide/customer-profiles-block.html) | V+ C+ T+ E+ | Enables you to retrieve, create, and update a customer profile. |
+| [Customer profiles](https://docs.aws.amazon.com/connect/latest/adminguide/customer-profiles-block.html) | V+ C+ T+ E+ | You can retrieve, create, and update a customer profile. |
 | [Data Table](https://docs.aws.amazon.com/connect/latest/adminguide/data-table-block.html) | ? | Evaluate, list, or write data from data tables within your contact flows. |
 | [Disconnect / hang up](https://docs.aws.amazon.com/connect/latest/adminguide/disconnect-hang-up.html) | V+ C+ T+ E+ | Disconnects a contact. |
 | [Distribute by percentage](https://docs.aws.amazon.com/connect/latest/adminguide/distribute-by-percentage.html) | V+ C+ T+ E+ | Routes customers randomly based on a percentage. |
 | [End flow / Resume](https://docs.aws.amazon.com/connect/latest/adminguide/end-flow-resume.html) | V+ C+ T+ E+ | Ends the current flow without disconnecting the contact. |
+| [External Tool](https://docs.aws.amazon.com/connect/latest/adminguide/external-tool.html) | ? | Invokes a tool from an external application integrated through an Amazon Bedrock AgentCore gateway. |
 | [Get customer input](https://docs.aws.amazon.com/connect/latest/adminguide/get-customer-input.html) | V+ C? T- E- | Branches based on customer intent. |
 | [Get metrics](https://docs.aws.amazon.com/connect/latest/adminguide/get-queue-metrics.html) | V+ C+ T+ E+ | Retrieves real-time metrics about queues and agents in your contact center and returns them as attributes. |
 | [Get stored content](https://docs.aws.amazon.com/connect/latest/adminguide/get-stored-content.html) | ? | Retrieves content stored in S3 and returns them as attributes to be used within flows. |
 | [Hold customer or agent](https://docs.aws.amazon.com/connect/latest/adminguide/hold-customer-agent.html) | V+ C~ T~ E~ | Places a customer or agent on or off hold. |
+| [Interrupt agent](https://docs.aws.amazon.com/connect/latest/adminguide/interrupt-agent.html) | V+ C+ T+ E+ | Offers a contact to a specific agent even if the agent is at maximum concurrency or in a custom status. |
 | [Invoke module](https://docs.aws.amazon.com/connect/latest/adminguide/invoke-module-block.html) | V+ C+ T+ E+ | Calls a published module. |
 | [Loop](https://docs.aws.amazon.com/connect/latest/adminguide/loop.html) | V+ C+ T+ E+ | Loops through, or repeats, the **Looping** branch for the number of loops specified or the number of elements in the provided array. |
 | [Loop prompts](https://docs.aws.amazon.com/connect/latest/adminguide/loop-prompts.html) | V+ C~ T~ E~ | Loops a sequence of prompts while a customer or agent is on hold or in queue. |

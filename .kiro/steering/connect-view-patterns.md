@@ -75,6 +75,17 @@ practice that the local validator passes:
   (passed through Show view's Set JSON), e.g.
   `"Heading": "$.Customer.Name"`. The View renderer resolves
   these at view-mount time.
+- **`$.` resolves ONLY when the whole value is a single expression —
+  there is NO inline interpolation (field-learned).** A `Content` /
+  prop value that is exactly `"$.stepHeading"` resolves; a value that
+  mixes static text with references, e.g.
+  `"Paso $.stepNumber de $.totalSteps"`, renders **literally** (the
+  agent sees the raw `$.stepNumber` text). The renderer does not do
+  string templating. Fix: pre-format the full string upstream in the
+  flow's `ShowView` `ViewData` and bind the whole thing as one
+  expression — pass `"stepCounter": "Paso 1 de 6"` and use
+  `"Content": ["$.stepCounter"]`. Same rule for any label that needs
+  text + data: assemble it in the flow, not the template.
 
 
 ## 1. Detail screen pop (display-only)

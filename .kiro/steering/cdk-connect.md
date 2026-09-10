@@ -1,10 +1,10 @@
 ---
 inclusion: manual
-last_refreshed: 2026-06-04
-construct_count: 34
+last_refreshed: 2026-09-10
+construct_count: 37
 source_urls:
   - https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_connect/README.html
-content_checksum: sha256:33ab639644712543
+content_checksum: sha256:c380b961d4186067
 ---
 
 # CDK construct catalog — Amazon Connect (`aws_cdk.aws_connect`)
@@ -21,7 +21,7 @@ resources in a `CDK_Project`.
 **Freshness rule (for the agent):** before relying on this catalog,
 compare the `last_refreshed` date in the front matter with today's
 date. If the file is older than 7 days, run
-``uv run python .kiro/hooks/scripts/refresh_cdk_docs.py`` to refresh it
+``uv run python .kiro/scripts/refresh_cdk_docs.py`` to refresh it
 before answering. Always refresh when the user explicitly asks for it.
 A regenerated file with no diff is fine — `last_refreshed` is the only
 thing that needs updating, and the script handles that automatically.
@@ -69,3 +69,6 @@ terminal) with the construct name.
 | [CfnDataTableAttribute](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_connect/CfnDataTableAttribute.html) | Defines an attribute (column) on a Connect data table. |
 | [CfnDataTableRecord](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_connect/CfnDataTableRecord.html) | Writes a record (row) into a Connect data table. |
 | [CfnWorkspace](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_connect/CfnWorkspace.html) | Provisions an agent workspace resource for the instance. |
+| [CfnDataLakeAssociation](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_connect/CfnDataLakeAssociation.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
+| [CfnTestCase](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_connect/CfnTestCase.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
+| [CfnMetric](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_connect/CfnMetric.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |

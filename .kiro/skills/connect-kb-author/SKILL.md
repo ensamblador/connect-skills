@@ -108,6 +108,56 @@ admin guide):
   appears. Poll `list-contents` until count matches and all are
   `ACTIVE`.
 
+**Agent-workspace article rendering needs TWO authorization layers (field-learned):**
+
+When you wire a KB directly (CDK / CLI) instead of through the Connect
+console's "Add integration" flow, opening a KB article in the agent
+workspace can fail with:
+
+```
+User: arn:aws:sts::<acct>:assumed-role/AWSServiceRoleForAmazonConnect_xxx/...
+is not authorized to perform: wisdom:GetContent on resource:
+arn:aws:wisdom:<region>:<acct>:content/<kbId>/<contentId>
+because no session policy allows the wisdom:GetContent action
+```
+
+This is NOT the human agent's security profile (admin doesn't help) and
+NOT the role itself (the SLR `AmazonConnectServiceLinkedRolePolicy` is
+fixed). The workspace's `api-proxy` assumes the Connect **service-linked
+role** with a scoped-down **session policy**, and BOTH of these must be
+satisfied:
+
+1. **SLR base policy → resource tag.** The SLR statement
+   `AllowWisdomForConnectEnabledTaggedResources` allows `wisdom:*` only
+   where `aws:ResourceTag/AmazonConnectEnabled == "True"`. The console
+   tags the KB **and** assistant with `AmazonConnectEnabled=True`
+   (+ `AmazonConnectInstanceId`) automatically; a direct-wired KB must
+   carry these tags too. (The tag is evaluated against the KB resource;
+   tagging individual content items is NOT required — see layer 2.)
+2. **Session policy → instance integration association.** The session
+   policy the `api-proxy` mints is built from the Connect **instance's
+   integration associations**, not from tags. The KB must be bound to
+   the instance with a `WISDOM_KNOWLEDGE_BASE` integration association
+   (`AWS::Connect::IntegrationAssociation` / `connect
+   create-integration-association --integration-type
+   WISDOM_KNOWLEDGE_BASE --integration-arn <kb-arn>`). A
+   `CfnAssistantAssociation` (KB↔assistant) alone is NOT enough, and a
+   `WISDOM_ASSISTANT` association alone is NOT enough — without the
+   `WISDOM_KNOWLEDGE_BASE` entry the session policy has no grant for the
+   KB's content and you get the error above.
+
+   Diagnose with
+   `aws connect list-integration-associations --instance-id <id>
+   --region <region>`: you should see both `WISDOM_ASSISTANT` (→ the
+   assistant/domain) and `WISDOM_KNOWLEDGE_BASE` (→ the KB). If the
+   `WISDOM_KNOWLEDGE_BASE` one is missing, that's the bug.
+
+   The "We're having trouble loading this content" tag fix (layer 1) and
+   this association (layer 2) are SEPARATE — fixing only the tag still
+   fails with "no session policy allows". The Connect console's "Add
+   integration" does both at once; direct-wired KBs must do both
+   explicitly.
+
 Do not invent other content types, size limits, or tag mechanisms. If
 unsure, `search_docs` for the current page.
 
@@ -350,6 +400,15 @@ aws qconnect create-knowledge-base \
 aws qconnect create-assistant-association \
   --assistant-id <domain-id> --association-type KNOWLEDGE_BASE \
   --association '{"knowledgeBaseId":"<kb-id>"}' --region <region>
+
+# 6b. Bind the KB to the Connect INSTANCE (required for agent-workspace
+#     article rendering — see the "TWO authorization layers" gotcha above).
+#     Without this the workspace fails with "no session policy allows
+#     wisdom:GetContent". The console's "Add integration" does this for you.
+aws connect create-integration-association \
+  --instance-id <connect-instance-id> \
+  --integration-type WISDOM_KNOWLEDGE_BASE \
+  --integration-arn <kb-arn> --region <region>
 
 # 7. Wait for the async sync, then verify (csv is silently skipped)
 aws qconnect list-contents --knowledge-base-id <kb-id> --region <region>

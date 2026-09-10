@@ -85,18 +85,18 @@ model bindings, and API formats:
 The cache goes stale when AWS publishes a new revision of a system
 prompt. To re-dump:
 
-- **Quick path:** trigger the **Refresh System Prompts** hook
-  (`.kiro/hooks/refresh-system-prompts.kiro.hook`).
+- **Quick path:** ask for a system-prompts refresh — the
+  `steering-refresher` skill dispatches it.
 - **CLI path:**
   ```
-  uv run python .kiro/hooks/scripts/refresh_system_prompts.py
+  uv run --with boto3 python .kiro/scripts/refresh_system_prompts.py
   ```
 - **Different domain / region / profile:**
   ```
   DOMAIN_ID=<other-uuid> \
   AWS_REGION=us-east-1 \
   AWS_PROFILE=other-profile \
-  uv run python .kiro/hooks/scripts/refresh_system_prompts.py
+  uv run --with boto3 python .kiro/scripts/refresh_system_prompts.py
   ```
 
 The script overwrites every `*.yaml` in this folder and rewrites

@@ -37,7 +37,7 @@ operator to the owning skill.
 2. Pull the construct catalogs into context: `#cdk-connect`, `#cdk-lex`,
    `#cdk-q-in-connect`, `#cdk-agentcore`, and the conventions in
    `#cdk-iac`. If any catalog's `last_refreshed` is older than 7 days,
-   refresh it (`uv run python .kiro/hooks/scripts/refresh_cdk_docs.py`)
+   refresh it (`uv run python .kiro/scripts/refresh_cdk_docs.py`)
    before relying on it.
 3. **Verify construct properties before writing them.** Connect / Lex /
    Wisdom are L1-only (`Cfn*`) — there are no L2 convenience constructs,

@@ -23,7 +23,7 @@ pattern, or run the bootstrap / synth / diff / deploy workflow.
 **Freshness rule (for the agent):** before relying on this file, compare the
 `last_refreshed` date in the front matter with today's date. If the file is
 older than 7 days, run
-``uv run python .kiro/hooks/scripts/refresh_cdk_docs.py`` to refresh the CDK
+``uv run python .kiro/scripts/refresh_cdk_docs.py`` to refresh the CDK
 catalogs before answering. Always refresh when the user explicitly asks for
 it. A regenerated file with no diff is fine — `last_refreshed` is the only
 thing that needs updating, and the script handles that automatically.

@@ -1,6 +1,6 @@
 ---
 inclusion: manual
-last_refreshed: 2026-06-04
+last_refreshed: 2026-09-10
 construct_count: 4
 source_urls:
   - https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_lex.html
@@ -20,7 +20,7 @@ resources in a `CDK_Project`.
 **Freshness rule (for the agent):** before relying on this catalog,
 compare the `last_refreshed` date in the front matter with today's
 date. If the file is older than 7 days, run
-``uv run python .kiro/hooks/scripts/refresh_cdk_docs.py`` to refresh it
+``uv run python .kiro/scripts/refresh_cdk_docs.py`` to refresh it
 before answering. Always refresh when the user explicitly asks for it.
 A regenerated file with no diff is fine — `last_refreshed` is the only
 thing that needs updating, and the script handles that automatically.

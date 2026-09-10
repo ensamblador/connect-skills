@@ -12,8 +12,7 @@ were retrieved from a live Amazon Connect AI agents domain via the
 - **AWS account:** `111122223333`
 - **Region:** `us-west-2`
 - **Last refreshed:** see `_manifest.json`'s file mtime, or run the
-  refresh script (`hooks/refresh-system-prompts.kiro.hook`) to stamp
-  it.
+  refresh script (see the Refresh section below) to stamp it.
 
 The same prompts are visible to any IAM principal with
 `qconnect:ListAIPrompts` and `qconnect:GetAIPrompt` permissions on
@@ -51,17 +50,16 @@ that is the only system prompt body in the public docs.
 ## Refresh
 
 When AWS ships an updated revision of a system prompt, the cache here
-goes stale. Re-run the refresh hook:
+goes stale. Ask for a system-prompts refresh and the
+`steering-refresher` skill will dispatch it, or call the script
+directly:
 
 ```
-.kiro/hooks/refresh-system-prompts.kiro.hook   →  userTriggered
+uv run --with boto3 python .kiro/scripts/refresh_system_prompts.py
 ```
 
-Or call the refresh script directly:
-
-```
-uv run python .kiro/hooks/scripts/refresh_system_prompts.py
-```
+This script needs valid AWS credentials and a region (`AWS_REGION` or
+`--region`), because it calls the Q in Connect APIs via boto3.
 
 The script overwrites every YAML in this folder and rewrites
 `_manifest.json`.

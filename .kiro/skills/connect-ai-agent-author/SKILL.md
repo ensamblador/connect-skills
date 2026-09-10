@@ -39,7 +39,7 @@ steering file, and a folder of cached system prompts. Before stage
    `#connect-ai-agents`. It is needed in every stage. If the
    `last_refreshed` field in the front matter is older than 7 days,
    refresh it before relying on it
-   (`uv run python .kiro/hooks/scripts/refresh_connect_ai_agents.py`). The file
+   (`uv run python .kiro/scripts/refresh_connect_ai_agents.py`). The file
    carries its own freshness rule.
 3. The cached system prompts at
    `.kiro/skills/connect-ai-agent-author/system-prompts/`. Read the
@@ -48,9 +48,9 @@ steering file, and a folder of cached system prompts. Before stage
    for any custom prompt you author, and the NOTICE explains the
    provenance and licensing constraint (AWS-owned content; not in
    public docs; do not redistribute outside this repo).
-   Re-dump from the live domain via the **Refresh System Prompts**
-   hook (`.kiro/hooks/refresh-system-prompts.kiro.hook`) or the
-   `.kiro/hooks/scripts/refresh_system_prompts.py` script if AWS has shipped new
+   Re-dump from the live domain via the `steering-refresher` skill
+   (ask for a system-prompts refresh) or the
+   `.kiro/scripts/refresh_system_prompts.py` script if AWS has shipped new
    revisions since the last cache.
 
 If the user's design also needs a host contact flow or a Lex
@@ -746,6 +746,12 @@ the official admin-guide pages indexed by `#connect-ai-agents`.
   request to switch languages." Models drift to English without
   the explicit rule. The system `AnswerGeneration` prompt models
   this — copy its locale handling verbatim.
+- **Get the finished prompt reviewed.** Once stage 3a produces a
+  prompt, hand it to the `connect-prompt-reviewer` skill for a
+  severity-ranked findings report before deploying. It grades the
+  prompt against the full best-practices catalog, the cached system
+  prompts, and the lean/latency guidance, and only rewrites on your
+  explicit go. It is the review counterpart of this authoring skill.
 
 ### Tools
 

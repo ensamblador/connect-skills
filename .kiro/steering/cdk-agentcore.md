@@ -1,10 +1,10 @@
 ---
 inclusion: manual
-last_refreshed: 2026-06-04
-construct_count: 19
+last_refreshed: 2026-09-10
+construct_count: 26
 source_urls:
   - https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore.html
-content_checksum: sha256:58559e698084ad9e
+content_checksum: sha256:983396a263655855
 ---
 
 # CDK construct catalog — Bedrock AgentCore (`aws_cdk.aws_bedrockagentcore`)
@@ -22,7 +22,7 @@ resources in a `CDK_Project`.
 **Freshness rule (for the agent):** before relying on this catalog,
 compare the `last_refreshed` date in the front matter with today's
 date. If the file is older than 7 days, run
-``uv run python .kiro/hooks/scripts/refresh_cdk_docs.py`` to refresh it
+``uv run python .kiro/scripts/refresh_cdk_docs.py`` to refresh it
 before answering. Always refresh when the user explicitly asks for it.
 A regenerated file with no diff is fine — `last_refreshed` is the only
 thing that needs updating, and the script handles that automatically.
@@ -41,7 +41,6 @@ terminal) with the construct name.
 | [CfnRuntime](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnRuntime.html) | Provisions an AgentCore Runtime — the containerized execution environment for an agent. |
 | [CfnRuntimeEndpoint](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnRuntimeEndpoint.html) | Creates a stable endpoint that points at a specific AgentCore Runtime version. |
 | [CfnMemory](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnMemory.html) | Provisions AgentCore Memory (short-term and long-term) so agents retain context. |
-| [CfnBrowser](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnBrowser.html) | Provisions a managed AgentCore browser tool resource. |
 | [CfnBrowserCustom](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnBrowserCustom.html) | Provisions a custom AgentCore browser tool with your own configuration. |
 | [CfnBrowserProfile](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnBrowserProfile.html) | Defines a reusable browser profile for AgentCore browser sessions. |
 | [CfnCodeInterpreterCustom](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnCodeInterpreterCustom.html) | Provisions a custom AgentCore code-interpreter sandbox. |
@@ -55,6 +54,14 @@ terminal) with the construct name.
 | [CfnOnlineEvaluationConfig](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnOnlineEvaluationConfig.html) | Configures continuous online evaluation of live agent traffic. |
 | [CfnDataset](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnDataset.html) | Defines a dataset used by AgentCore evaluation. |
 | [CfnHarness](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnHarness.html) | Defines an AgentCore harness for agent testing and orchestration. |
+| [CfnConfigurationBundle](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnConfigurationBundle.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
+| [CfnPaymentConnector](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnPaymentConnector.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
+| [CfnPaymentManager](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnPaymentManager.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
+| [CfnResourcePolicy](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnResourcePolicy.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
+| [CfnCapacityProvider](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnCapacityProvider.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
+| [CfnGatewayRateLimit](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnGatewayRateLimit.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
+| [CfnGatewayRule](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnGatewayRule.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
+| [CfnHarnessEndpoint](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnHarnessEndpoint.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
 
 ## Hard-won deploy learnings (CfnGateway / CfnGatewayTarget)
 

@@ -8,7 +8,9 @@ build/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.hypothesis/
 .DS_Store
+
 # === Node / Vite (website) ===
 node_modules/
 dist/
@@ -17,4 +19,3 @@ dist/
 .env.*
 # Mantener versionada la plantilla de variables del website
 !.env.example
-.kiro/specs/

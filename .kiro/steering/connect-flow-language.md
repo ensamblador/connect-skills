@@ -1,6 +1,6 @@
 ---
 inclusion: manual
-last_refreshed: 2026-05-26
+last_refreshed: 2026-09-10
 action_count: 56
 source_urls:
   - https://docs.aws.amazon.com/connect/latest/devguide/flow-language-actions.html
@@ -17,7 +17,7 @@ Distilled from the Connect Flow language API reference. Two parts:
 the **grammar** (how every Action is shaped) and the **action catalog**
 (every concrete Action type, its category, and a one-line description).
 
-Refresh with ``uv run python .kiro/hooks/scripts/refresh_connect_flow_language.py``.
+Refresh with ``uv run python .kiro/scripts/refresh_connect_flow_language.py``.
 
 **Activation:** opt-in. Reference from chat with `#connect-flow-language`
 when generating, validating, or reviewing flow JSON. Pair with
@@ -27,7 +27,7 @@ Flow language Action types.
 **Freshness rule (for the agent):** before relying on this reference,
 compare the `last_refreshed` date in the front matter with today's
 date. If the file is older than 7 days, run
-``uv run python .kiro/hooks/scripts/refresh_connect_flow_language.py`` to refresh it
+``uv run python .kiro/scripts/refresh_connect_flow_language.py`` to refresh it
 before answering. Always refresh when the user explicitly asks for it.
 
 For depth on any Action (full Parameters object, errors, examples),
@@ -109,8 +109,10 @@ total (regardless of nesting depth).
 ## Server-side deploy gaps (validate_flow_json does NOT catch these)
 
 `validate_flow_json` checks structure but is looser than the
-`CreateContactFlow` / `CreateContactFlowModule` server schema. Real
-400s seen in practice that the local validator passes:
+`CreateContactFlow` / `CreateContactFlowModule` server schema. A
+`{"valid": true}` result is necessary but not sufficient: check this
+list before deploying. Real 400s seen in practice that the local
+validator passes:
 
 - **`UpdateFlowLoggingBehavior` must NOT carry an `Errors` array.**
   Declare only `Transitions.NextAction`. Adding
