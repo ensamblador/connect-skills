@@ -7,16 +7,18 @@ were retrieved from a live Amazon Connect AI agents domain via the
 
 ## Source
 
-- **Domain (assistant) ID:** `11111111-2222-3333-4444-555555555555`
-  (named `my-connect-domain`)
-- **AWS account:** `111122223333`
-- **Region:** `us-west-2`
-- **Last refreshed:** see `_manifest.json`'s file mtime, or run the
-  refresh script (see the Refresh section below) to stamp it.
+These are AWS `SYSTEM`-origin prompts, identical in every Amazon
+Connect AI agents domain. Whoever ran the refresh pulled them from
+their own domain, so the source domain is an implementation detail and
+is deliberately not recorded here.
 
-The same prompts are visible to any IAM principal with
-`qconnect:ListAIPrompts` and `qconnect:GetAIPrompt` permissions on
-any Amazon Connect AI agents domain.
+`_manifest.json` records what the local copy contains, including each
+prompt's `aiPromptId`, `modelId`, and `type`. Its file mtime is the
+effective "last refreshed" stamp. That manifest is gitignored alongside
+the YAML files, so it describes your copy only.
+
+Any IAM principal with `qconnect:ListAIPrompts` and
+`qconnect:GetAIPrompt` on any AI agents domain sees the same content.
 
 ## Licensing and redistribution
 
@@ -58,11 +60,25 @@ directly:
 uv run --with boto3 python .kiro/scripts/refresh_system_prompts.py
 ```
 
-This script needs valid AWS credentials and a region (`AWS_REGION` or
-`--region`), because it calls the Q in Connect APIs via boto3.
+Credentials alone are not enough. The script needs four things:
+
+1. AWS credentials for an account that has an Amazon Connect AI agents
+   domain, which is a Q in Connect assistant.
+2. The region that domain lives in, from `--region`, `AWS_REGION`, or
+   `AWS_DEFAULT_REGION`. Point it at a region without a domain and it
+   finds nothing to pull.
+3. IAM permissions for `qconnect:ListAssistants`,
+   `qconnect:ListAIPrompts`, and `qconnect:GetAIPrompt`.
+4. `boto3`, supplied by the `--with boto3` flag above.
+
+Any domain works, since the prompts are AWS-shipped and identical
+across domains. By default the script resolves the first domain from
+`ListAssistants`; pass `--domain-id <uuid>` to choose a specific one.
+Add `--dry-run` to list the prompts and print the manifest without
+writing.
 
 The script overwrites every YAML in this folder and rewrites
-`_manifest.json`.
+`_manifest.json`. `NOTICE.md` and `README.md` are left alone.
 
 ## Questions
 

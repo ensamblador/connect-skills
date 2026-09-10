@@ -53,10 +53,9 @@ terminal) with the construct name.
 ## Deploy-tested pattern — EXTERNAL knowledge base backed by Amazon S3
 
 Provision an EXTERNAL Q in Connect knowledge base whose documents live in an
-S3 bucket. Validated end-to-end in `projects/telco-cx` (account 111122223333,
-us-west-2). The reusable construct lives at
-`projects/telco-cx/telco-cx-cdk/knowledge_bases/knowledge_base.py`
-(`S3KnowledgeBase`).
+S3 bucket. Validated end-to-end in a telco reference project (us-west-2). The
+reusable construct was an `S3KnowledgeBase` wrapper; that project tree is no
+longer in this repo, so treat the pattern below as the record of it.
 
 ### Resource chain (must be created in this order)
 

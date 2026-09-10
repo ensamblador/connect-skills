@@ -1,11 +1,13 @@
 # System AI prompts — read-only reference
 
-These YAML files are the system AI prompts shipped by Amazon Connect
-in the `my-connect-domain` AI agents domain
-(assistant `11111111-2222-3333-4444-555555555555` in us-west-2,
-account 111122223333). They were dumped via
+These YAML files are the system AI prompts shipped by Amazon Connect,
+pulled from an AI agents domain via
 `aws qconnect get-ai-prompt --origin SYSTEM` against every prompt in
-`list-ai-prompts --origin SYSTEM`.
+`list-ai-prompts --origin SYSTEM`. They are `SYSTEM`-origin content,
+identical across domains, so the domain they came from does not matter.
+
+These files are gitignored. Pull your own copy from your own Connect
+instance; see the re-dump steps below.
 
 > **Provenance and licensing:** these prompts are AWS-owned content,
 > not published in AWS public documentation, and not under any

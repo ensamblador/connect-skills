@@ -28,3 +28,10 @@ dist/
 # See .kiro/skills/connect-ai-agent-author/system-prompts/NOTICE.md
 .kiro/skills/connect-ai-agent-author/system-prompts/*.yaml
 .kiro/skills/connect-ai-agent-author/system-prompts/_manifest.json
+
+# === Machine-local MCP config ===
+# Holds absolute paths to the uv binary and this checkout, so it names one
+# machine and one user account. The versioned template is
+# .kiro/mcp.example.json; its __setup__ key carries the instructions:
+#   cp .kiro/mcp.example.json .kiro/settings/mcp.json
+.kiro/settings/mcp.json

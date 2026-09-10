@@ -1,0 +1,57 @@
+{
+  "__setup__": {
+    "1_copy": "cp .kiro/mcp.example.json .kiro/settings/mcp.json",
+    "2_find_uv": "which uv",
+    "3_find_repo": "pwd    # run at this repo's root",
+    "4_replace": "In the copy, replace every ABSOLUTE_PATH_TO_UV with the output of step 2, and every ABSOLUTE_PATH_TO_REPO with the output of step 3. Four substitutions total, two per server.",
+    "5_delete_this_key": "Remove this __setup__ object. Kiro tolerates it, but it is noise in a live config.",
+    "6_reload": "Open the MCP Server view in the Kiro feature panel and reconnect both servers, or restart Kiro.",
+    "why_absolute_paths": "Kiro does not expand ~, $HOME, or ${workspaceFolder} inside 'command' or 'args'. Both must be absolute.",
+    "why_this_file_exists": ".kiro/settings/mcp.json is gitignored because those absolute paths name one machine and one user account. This template is the versioned stand-in.",
+    "no_credentials_here": "Neither server takes AWS credentials. Both fetch public AWS documentation over HTTPS. Never add secrets to this file; put them in the ambient environment or Secrets Manager.",
+    "prerequisites": [
+      "uv installed: https://docs.astral.sh/uv/getting-started/installation/",
+      "Python 3.11, which uv resolves from each server's .python-version",
+      "First launch downloads dependencies, so expect a slow initial connect"
+    ],
+    "verify": "Ask Kiro to call search_docs with any query. A result means connect_knowledge is live. Ask for search_cdk_docs to check the other."
+  },
+  "mcpServers": {
+    "connect_knowledge": {
+      "command": "ABSOLUTE_PATH_TO_UV",
+      "args": [
+        "run",
+        "--directory",
+        "ABSOLUTE_PATH_TO_REPO/.kiro/connect_knowledge_mcp",
+        "python",
+        "connect_knowledge_mcp.py"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "search_docs",
+        "search_blogs",
+        "search_repost",
+        "get_block_doc",
+        "get_action_doc",
+        "get_view_component_doc",
+        "validate_flow_json",
+        "validate_view_json"
+      ]
+    },
+    "cdk_docs": {
+      "command": "ABSOLUTE_PATH_TO_UV",
+      "args": [
+        "run",
+        "--directory",
+        "ABSOLUTE_PATH_TO_REPO/.kiro/cdk_docs_mcp",
+        "python",
+        "cdk_docs_mcp.py"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "search_cdk_docs",
+        "get_cdk_construct_doc"
+      ]
+    }
+  }
+}
