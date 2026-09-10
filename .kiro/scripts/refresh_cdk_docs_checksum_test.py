@@ -32,7 +32,8 @@ network and no file I/O:
 
 Run with::
 
-    uv run --extra dev pytest .kiro/scripts/refresh_cdk_docs_checksum_test.py
+    uv run --project .kiro/connect_knowledge_mcp --with pytest --with hypothesis \
+        pytest .kiro/scripts/refresh_cdk_docs_checksum_test.py
 """
 
 from __future__ import annotations

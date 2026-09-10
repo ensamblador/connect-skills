@@ -1,38 +1,104 @@
 # cdk-docs-mcp
 
-MCP server that exposes AWS CDK (Python) reference documentation as tools
-any MCP client can call (Kiro, Claude Desktop, Claude Code, Strands, custom
-agents).
+MCP server exposing the AWS CDK for Python reference over stdio. Two
+tools: free-text search across the reference, and a per-construct
+property dump. Any MCP client can call them.
 
-The server is a thin wrapper around the fetch / parse / search functions in
-the [`cdk_docs`](cdk_docs) Python package that ships in this same folder. It
-is modeled 1:1 on the sibling [`connect_knowledge_mcp/`](../connect_knowledge_mcp)
-server: one process, stdio transport, its own `pyproject.toml` and `uv`
+The server is a thin FastMCP wrapper around the fetch, parse, and search
+functions in the [`cdk_docs`](cdk_docs) package in this same folder. It
+mirrors the sibling
+[`connect_knowledge_mcp`](../connect_knowledge_mcp/README.md) server:
+one process, stdio transport, its own `pyproject.toml` and `uv`
 environment.
-
-> **Status: scaffold.** This folder currently contains the package
-> structure, `pyproject.toml`, and console-script stubs only. The tools,
-> the fetch / parse / search modules, and the FastMCP server file are
-> delivered by downstream tasks.
 
 ## Construct-library scope
 
-The server serves documentation for the four in-scope CDK construct
-libraries relevant to Connect IaC work:
+Four in-scope libraries cover Connect IaC work:
 
-| Library | Reference |
-|---|---|
-| `aws_cdk.aws_connect` | Amazon Connect constructs (L1 `Cfn*`) |
-| `aws_cdk.aws_lex` | Amazon Lex constructs |
-| `aws_cdk.aws_wisdom` | Amazon Q in Connect (Wisdom) constructs |
-| `aws_cdk.aws_bedrockagentcore` | Bedrock AgentCore gateway constructs |
-
-## Tools (planned)
-
-| Tool | Console script | Purpose |
+| Library | Covers | Paired catalog |
 |---|---|---|
-| `search_cdk_docs(query, limit=10)` | `cdk-docs-search` | Free-text search over the CDK reference; returns `Title / URL / Snippet` blocks |
-| `get_cdk_construct_doc(construct, library=None)` | `cdk-construct-doc` | Per-construct deep dive; returns parsed `{construct, library, url, properties, raw_sections}` |
+| `aws_cdk.aws_connect` | Amazon Connect L1 `Cfn*` constructs | `#cdk-connect`, 37 constructs |
+| `aws_cdk.aws_lex` | Amazon Lex constructs | `#cdk-lex`, 4 constructs |
+| `aws_cdk.aws_wisdom` | Amazon Q in Connect (Wisdom) constructs | `#cdk-q-in-connect`, 12 constructs |
+| `aws_cdk.aws_bedrockagentcore` | Bedrock AgentCore gateway constructs | `#cdk-agentcore`, 26 constructs |
+
+The catalogs in [`.kiro/steering`](../steering) hold the construct lists
+with one-line descriptions. Use them to find the right construct name,
+then use `get_cdk_construct_doc` here for its properties. The refresh
+script `refresh_cdk_docs.py` regenerates all four from the same upstream
+pages this server reads.
+
+## Tool reference
+
+### search_cdk_docs
+
+```python
+search_cdk_docs(query: str, limit: int = 10) -> str
+```
+
+Searches the CDK for Python reference at
+`docs.aws.amazon.com/cdk/api/v2/python`. Use it to find the right
+construct or property when authoring CDK Python infrastructure.
+
+In:
+- `query`, free-text search string.
+- `limit`, maximum hits, default 10.
+
+Out: hits separated by `---`, each shaped as
+
+```
+Title: <construct or props page title>
+URL: <full https URL>
+Snippet: <excerpt>
+```
+
+Search matches construct names across every CDK module, not only the
+four in-scope libraries. A query for `CfnInstance` returns
+`aws_connect.CfnInstance` alongside `aws_opsworks.CfnInstance` and
+`aws_sso.CfnInstance`. Naming the service in the query improves ranking
+but does not filter, so check the module segment in the URL when a
+construct name is common.
+
+Snippets are thin on some pages. Props pages in particular often return
+a copyright line or a boilerplate import block. That reflects the source
+page, not a parse failure. Follow up with `get_cdk_construct_doc`.
+
+### get_cdk_construct_doc
+
+```python
+get_cdk_construct_doc(construct: str, library: str | None = None) -> dict[str, Any] | str
+```
+
+Fetches and parses one construct reference page. Use it when authoring
+or reviewing a construct and you need the canonical property list rather
+than a search snippet.
+
+In:
+- `construct`, the identifier, for example `CfnInstance`.
+- `library`, one of the four in-scope libraries. When `None`, each is
+  tried in order until one resolves: `aws_cdk.aws_connect`,
+  `aws_cdk.aws_lex`, `aws_cdk.aws_wisdom`,
+  `aws_cdk.aws_bedrockagentcore`. Auto-resolution is convenient for
+  unambiguous names like `CfnBot`, which lands in `aws_cdk.aws_lex`.
+  Pass `library` explicitly for names that exist in several modules.
+
+Out on success: dict with `construct`, `library`, `url`, `properties` as
+a list of `{name, type?, required?, description?}`, `description`, and
+`raw_sections` as an escape hatch holding `Description`, `Parameters`,
+`Attributes`, and `Methods` as raw text.
+
+Out on failure: a descriptive string naming the requested identifier and
+the reason per library tried. The docs CDN answers non-existent pages
+with `HTTP 403` rather than 404, so a 403 here means no such construct,
+not an auth or rate-limit problem.
+
+Two notes on the output. `properties` is the field to rely on; it is
+parsed and typed. `raw_sections["Attributes"]` can be very large for
+complex constructs, since it flattens every nested property type in the
+service model, so reach for it only when you need nested detail such as
+the inner fields of `AuthorizerConfigurationProperty`. Unicode in
+`raw_sections` arrives mojibaked, with em dashes and curly quotes
+rendering as `â`, so treat that text as approximate when quoting.
 
 ## Install
 
@@ -42,29 +108,55 @@ From this directory:
 uv sync
 ```
 
-That installs `mcp[cli]`, `requests`, and `beautifulsoup4`, and builds the
-`cdk_docs` package that lives in this folder, so any changes to the
-underlying functions flow through without a reinstall.
+That installs `mcp[cli]`, `requests`, and `beautifulsoup4`, and builds
+the local `cdk_docs` package so edits to the underlying functions take
+effect without a reinstall. Python 3.10 or newer. No browser binary is
+needed, unlike the `connect_knowledge` server.
 
 ## Run
 
-Stdio server (the way MCP clients launch it):
+Stdio server, the way MCP clients launch it:
 
 ```bash
 uv run python cdk_docs_mcp.py
 ```
 
-The server logs nothing on stdout (stdio is reserved for MCP frames). Use
-the MCP inspector for interactive testing:
+Nothing is logged to stdout, since stdio carries MCP frames. For
+interactive testing use the inspector:
 
 ```bash
 uv run mcp dev cdk_docs_mcp.py
 ```
 
+Two console scripts cover terminal use without an MCP client:
+
+```bash
+uv run cdk-docs-search "CfnInstance Amazon Connect"
+uv run cdk-construct-doc CfnInstance --library aws_cdk.aws_connect
+```
+
+## Tests
+
+```bash
+uv run --with pytest --with hypothesis pytest cdk_docs/ -q
+```
+
+32 tests. `hypothesis` is needed because `test_parse_fidelity.py` and
+`test_mcp_cli_parity.py` are property-based; without it those two error
+on collection.
+
+`test_live_fetch.py` hits the network. The rest parse fixtures.
+`test_mcp_cli_parity.py` asserts the MCP tools and the console scripts
+return the same data, so add new behavior in `cdk_docs/` rather than in
+the server file.
+
 ## Wire into a client
 
-Add to the relevant `mcp.json` (workspace at `.kiro/settings/mcp.json`,
-user at `~/.kiro/settings/mcp.json`):
+### Kiro
+
+Workspace config at `.kiro/settings/mcp.json`, user config at
+`~/.kiro/settings/mcp.json`. Use absolute paths, since the server is
+launched with an arbitrary working directory.
 
 ```json
 {
@@ -74,30 +166,52 @@ user at `~/.kiro/settings/mcp.json`):
       "args": [
         "run",
         "--directory",
-        "/absolute/path/to/connect-skills/cdk_docs_mcp",
+        "/absolute/path/to/connect-skills/.kiro/cdk_docs_mcp",
         "python",
         "cdk_docs_mcp.py"
       ],
       "disabled": false,
-      "autoApprove": ["search_cdk_docs", "get_cdk_construct_doc"]
+      "autoApprove": [
+        "search_cdk_docs",
+        "get_cdk_construct_doc"
+      ]
     }
   }
 }
 ```
 
+Claude Desktop uses the same block in
+`~/Library/Application Support/Claude/claude_desktop_config.json`.
+
+## Failure modes
+
+- `HTTP 403` from `get_cdk_construct_doc`. The construct does not exist
+  in that library. Check spelling, or run `search_cdk_docs` first to
+  find the correct module.
+- `spawn uv ENOENT` in the client log. The `command` path does not
+  resolve. Use the absolute path to `uv`, for example
+  `/Users/<you>/.local/bin/uv`, and confirm `--directory` points at this
+  folder.
+- Thin or boilerplate snippets from `search_cdk_docs`. Expected on props
+  and mixin pages. Follow up with `get_cdk_construct_doc`.
+
 ## Layout
 
 ```
-cdk_docs_mcp/
-├── README.md              # this file
-├── .python-version        # 3.11
-├── pyproject.toml         # mcp[cli] + builds the local cdk_docs package
-├── main.py                # placeholder (mirrors connect_knowledge_mcp)
-├── cdk_docs/              # fetch / parse / search / cli package (source of truth)
+.kiro/cdk_docs_mcp/
+├── README.md            # this file
+├── .python-version      # 3.11
+├── pyproject.toml       # deps, console scripts, builds cdk_docs
+├── main.py              # placeholder
+├── cdk_docs/            # fetch, parse, search, cli package
 │   ├── __init__.py
-│   └── cli.py             # console-script entry points
-└── cdk_docs_mcp.py        # FastMCP("cdk_docs") server (downstream task)
+│   ├── fetch.py
+│   ├── search.py        # backs search_cdk_docs
+│   ├── construct_doc.py # backs get_cdk_construct_doc
+│   ├── cli.py           # console-script entry points
+│   └── test_*.py        # 5 test modules
+└── cdk_docs_mcp.py      # FastMCP server, two @mcp.tool() functions
 ```
 
-The actual fetch / parse / search logic lives in `cdk_docs/`, shipped
-alongside this server. This directory is the MCP adapter plus its package.
+The fetch, parse, and search logic lives in `cdk_docs/`. This directory
+is the MCP adapter plus its package.

@@ -19,3 +19,12 @@ dist/
 .env.*
 # Mantener versionada la plantilla de variables del website
 !.env.example
+
+# === Amazon Connect IP: cached default AI system prompts ===
+# AWS-owned content, not published under an open-source license and not
+# in the public docs. Every user pulls their own copy from their Connect
+# instance:
+#   uv run --with boto3 python .kiro/scripts/refresh_system_prompts.py --region <region>
+# See .kiro/skills/connect-ai-agent-author/system-prompts/NOTICE.md
+.kiro/skills/connect-ai-agent-author/system-prompts/*.yaml
+.kiro/skills/connect-ai-agent-author/system-prompts/_manifest.json

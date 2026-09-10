@@ -18,7 +18,8 @@ example-based cases (exactly 7 days = fresh, 8 days = stale).
 
 Run with::
 
-    uv run --extra dev pytest .kiro/scripts/steering_freshness_test.py
+    uv run --project .kiro/connect_knowledge_mcp --with pytest --with hypothesis \
+        pytest .kiro/scripts/steering_freshness_test.py
 """
 
 from __future__ import annotations
@@ -33,6 +34,24 @@ from hypothesis import strategies as st
 # The helper lives next to this test in scripts/.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from steering_freshness import FRESHNESS_MAX_AGE_DAYS, is_stale  # noqa: E402
+
+# Widest offset the offset-based properties below apply to the generated
+# date, in days.
+_MAX_OFFSET_DAYS = 3650
+
+# Bare ``st.dates()`` spans date.min (year 1) through date.max (year
+# 9999). The two offset properties below add or subtract up to
+# ``_MAX_OFFSET_DAYS`` from a generated date, which raises
+# ``OverflowError`` from ``timedelta`` arithmetic once the result leaves
+# that span -- a defect in the test's own setup, not in ``is_stale``.
+# Keeping _MAX_OFFSET_DAYS of headroom at both ends makes the arithmetic
+# always representable. The unbounded strategy is still correct for
+# ``test_is_stale_iff_gap_exceeds_seven_days``, which only subtracts two
+# generated dates and so cannot leave the span.
+_DATES_WITH_OFFSET_HEADROOM = st.dates(
+    min_value=date.min + timedelta(days=_MAX_OFFSET_DAYS),
+    max_value=date.max - timedelta(days=_MAX_OFFSET_DAYS),
+)
 
 
 # --- Property 8: stale iff current_date - last_refreshed > 7 days ---------
@@ -55,8 +74,8 @@ def test_is_stale_iff_gap_exceeds_seven_days(
 
 @settings(max_examples=300)
 @given(
-    last_refreshed=st.dates(),
-    offset_days=st.integers(min_value=0, max_value=3650),
+    last_refreshed=_DATES_WITH_OFFSET_HEADROOM,
+    offset_days=st.integers(min_value=0, max_value=_MAX_OFFSET_DAYS),
 )
 def test_within_window_is_fresh_beyond_window_is_stale(
     last_refreshed: date, offset_days: int
@@ -74,7 +93,10 @@ def test_within_window_is_fresh_beyond_window_is_stale(
 
 
 @settings(max_examples=200)
-@given(last_refreshed=st.dates(), days_before=st.integers(min_value=0, max_value=3650))
+@given(
+    last_refreshed=_DATES_WITH_OFFSET_HEADROOM,
+    days_before=st.integers(min_value=0, max_value=_MAX_OFFSET_DAYS),
+)
 def test_current_date_not_after_last_refreshed_is_fresh(
     last_refreshed: date, days_before: int
 ) -> None:
