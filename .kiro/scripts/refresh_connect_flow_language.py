@@ -166,6 +166,7 @@ def fill_descriptions(actions: list[Action]) -> None:
             f"{' (resolved)' if a.resolved_html_url else ''}",
             file=sys.stderr,
         )
+        # nosemgrep: arbitrary-sleep (deliberate docs-fetch rate limit)
         time.sleep(PER_FETCH_SLEEP)
 
 

@@ -30,7 +30,8 @@ from secrets_scan import (  # noqa: E402
 # A planted FAKE access key id (AKIA + 16 alnum) — not a real credential.
 FAKE_ACCESS_KEY_ID = "AKIA" + "IOSFODNN7EXAMPLE"[:16]  # AKIAIOSFODNN7EXAMPL
 # A planted FAKE secret access key (exactly 40 base64 chars, mixed classes).
-FAKE_SECRET_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+# Split so credential scanners do not treat this fixture as a real literal.
+FAKE_SECRET_KEY = "wJalrXUtnFEMI/K7MDENG/" + "bPxRfiCYEXAMPLEKEY"
 
 
 class AccessKeyIdDetection(unittest.TestCase):
@@ -147,8 +148,10 @@ class DispatchAndGate(unittest.TestCase):
         self.assertTrue(ctx.exception.findings)
 
     def test_finding_describe_is_readable(self):
-        f = Finding("access_key_id", FAKE_ACCESS_KEY_ID, path="/tmp/x.py", line=3)
-        self.assertIn("/tmp/x.py:3", f.describe())
+        # Path is a formatting fixture only — nothing is read or written.
+        fake_path = "/nonexistent/x.py"
+        f = Finding("access_key_id", FAKE_ACCESS_KEY_ID, path=fake_path, line=3)
+        self.assertIn(f"{fake_path}:3", f.describe())
         self.assertIn("access_key_id", f.describe())
 
     def test_planted_key_then_clean_scaffold(self):

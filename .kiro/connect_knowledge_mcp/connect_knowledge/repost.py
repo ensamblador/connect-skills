@@ -131,6 +131,7 @@ def repost_full_search(
         out[section] = repost_search(query, section, tags, answered_only).get(
             "results", []
         )
+        # nosemgrep: arbitrary-sleep (deliberate re:Post rate limit)
         time.sleep(1)  # be polite between requests
     return out
 

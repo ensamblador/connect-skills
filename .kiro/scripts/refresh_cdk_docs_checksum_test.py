@@ -190,9 +190,11 @@ def test_checksum_is_deterministic(content: str) -> None:
     Same content → same checksum: ``content_checksum`` is a pure function
     of its input. Validates: Requirements 4.3.
     """
-    assert content_checksum(content) == content_checksum(content)
+    first = content_checksum(content)
+    second = content_checksum(content)
+    assert first == second, f"non-deterministic: {first!r} != {second!r}"
     # Shape contract: "sha256:" + 16 lowercase hex digits.
-    digest = content_checksum(content)
+    digest = first
     assert digest.startswith("sha256:")
     hexpart = digest[len("sha256:") :]
     assert len(hexpart) == 16

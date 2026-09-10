@@ -54,6 +54,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -105,12 +106,12 @@ class WorkshopCurated:
     # curated bundle of separate workshop landing pages (e.g. a
     # multi-module bootcamp series where each module has its own
     # workshop UUID).
-    modules: list[tuple[str, str]] | None = None
+    modules: tuple[tuple[str, str], ...] | None = None
     # When set, takes precedence over both ``modules`` and any
     # live-scraped sidebar. Use for curated bundles where each top-level
     # module also exposes its own internal sub-modules and you want the
     # steering file to render the full nested tree.
-    module_groups: list[WorkshopModuleGroup] | None = None
+    module_groups: tuple[WorkshopModuleGroup, ...] | None = None
     # Optional H2 override. When set, takes precedence over the live H1
     # of ``landing_url``. Required for curated bundles where the
     # landing_url is one module in the series and we want the bundle
@@ -118,7 +119,9 @@ class WorkshopCurated:
     title: str | None = None
 
 
-CURATED: list[WorkshopCurated] = [
+# Immutable module-level catalog: this is read-only reference data and
+# nothing in the script mutates it.
+CURATED: tuple[WorkshopCurated, ...] = (
     WorkshopCurated(
         slug="self-service-ai-agents",
         landing_url="https://catalog.workshops.aws/self-service-ai-agents/en-US",
@@ -292,7 +295,7 @@ CURATED: list[WorkshopCurated] = [
             "experience. Each module is a separate Workshop Studio "
             "workshop linked below."
         ),
-        module_groups=[
+        module_groups=(
             WorkshopModuleGroup(
                 label="Module 1: Generative AI concepts, features, architecture",
                 url="https://catalog.us-east-1.prod.workshops.aws/workshops/f91b5bee-9028-47c0-b1c5-11acfec7c9f3/en-US",
@@ -364,9 +367,9 @@ CURATED: list[WorkshopCurated] = [
                     "inside the Salesforce omni-channel widget."
                 ),
             ),
-        ],
+        ),
     ),
-]
+)
 
 
 # ----- runtime data shape -------------------------------------------------
@@ -530,11 +533,19 @@ def fetch_workshop(
     title = (page.locator("h1").first.inner_text(timeout=5_000) or "").strip()
 
     modules: list[tuple[str, str]] = []
+    # Anchors can detach mid-iteration as the SPA re-renders, and
+    # ``inner_text`` times out on hidden ones. Both are expected; count
+    # them so a page that yields no modules is diagnosable instead of
+    # silently empty.
+    unreadable = 0
+    last_anchor_error: Exception | None = None
     for anchor in page.locator("a[href]").all():
         try:
             href = anchor.get_attribute("href") or ""
             label = (anchor.inner_text(timeout=1_000) or "").strip()
-        except Exception:
+        except Exception as exc:  # noqa: BLE001 — playwright raises many types
+            unreadable += 1
+            last_anchor_error = exc
             continue
         if not label:
             continue
@@ -548,11 +559,17 @@ def fetch_workshop(
             modules.append((label, href))
 
     modules = _dedupe(modules)
+    if unreadable:
+        print(
+            f"    skipped {unreadable} unreadable anchor(s) "
+            f"(last: {last_anchor_error})",
+            file=sys.stderr,
+        )
     print(f"    {title!r} → {len(modules)} module link(s)", file=sys.stderr)
     return WorkshopRendered(curated=curated, title=title, modules=modules)
 
 
-def fetch_all(curated: list[WorkshopCurated]) -> list[WorkshopRendered]:
+def fetch_all(curated: Sequence[WorkshopCurated]) -> list[WorkshopRendered]:
     sync_playwright = _ensure_playwright()
     out: list[WorkshopRendered] = []
     with sync_playwright() as pw:

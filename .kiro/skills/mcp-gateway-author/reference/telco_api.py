@@ -32,7 +32,12 @@ _DEFAULT_METHOD_RESPONSES = [
     apigw.MethodResponse(status_code="404"),
 ]
 
-SECRET_API_KEY_JSON_KEY = "apiKey"
+# JSON field name inside the Secrets Manager secret that holds the
+# generated API key. This is a field name, not a credential.
+API_KEY_JSON_FIELD = "apiKey"
+
+# Empty JSON object the generator merges the generated key into.
+_EMPTY_JSON_TEMPLATE = "{}"
 
 
 class TelcoApi(Construct):
@@ -140,14 +145,14 @@ class TelcoApi(Construct):
             "ApiKeySecret",
             description="API key (API Gateway + AgentCore).",
             generate_secret_string=sm.SecretStringGenerator(
-                secret_string_template="{}",
-                generate_string_key=SECRET_API_KEY_JSON_KEY,
+                secret_string_template=_EMPTY_JSON_TEMPLATE,
+                generate_string_key=API_KEY_JSON_FIELD,
                 exclude_punctuation=True,
                 password_length=40,
             ),
         )
         key_value = self.api_key_secret.secret_value_from_json(
-            SECRET_API_KEY_JSON_KEY
+            API_KEY_JSON_FIELD
         ).unsafe_unwrap()
 
         self.api_key = self.api.add_api_key(

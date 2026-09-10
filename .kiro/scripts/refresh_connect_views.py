@@ -53,6 +53,7 @@ import hashlib
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -91,7 +92,7 @@ HIERARCHY = {
 }
 
 # Section order and headings used in the output document.
-SECTIONS = [
+SECTIONS: tuple[tuple[str, str, str], ...] = (
     ("AWS-managed Views", "AWS-managed Views",
      "Pre-built end-to-end view templates fully managed by Amazon Connect. "
      "Use these as a `Show view` block target when you want a ready-made screen "
@@ -110,7 +111,7 @@ SECTIONS = [
      "Subset of UI components that are valid inside a `Form` UI component. They "
      "render input fields whose values are submitted via the `SubmitButton` and "
      "surfaced on the `Show view` block's branches."),
-]
+)
 
 
 # ----- fetch & module slicing ---------------------------------------------
@@ -482,13 +483,13 @@ def build_document(
 #   because the lead paragraph is often too long or too generic to
 #   serve as a tight catalog row.
 
-ADMIN_GUIDE_BUCKETS: list[tuple[str, str]] = [
+ADMIN_GUIDE_BUCKETS: tuple[tuple[str, str], ...] = (
     ("setup", "Setup & permissions"),
     ("authoring", "Authoring views & guides"),
     ("integration", "Integration patterns & use cases"),
-]
+)
 
-ADMIN_GUIDE_SOURCES: list[tuple[str, str, str | None, str | None]] = [
+ADMIN_GUIDE_SOURCES: tuple[tuple[str, str, str | None, str | None], ...] = (
     # Setup & permissions
     (
         "step-by-step-guided-experiences", "setup", "Step-by-step guides — overview",
@@ -631,7 +632,7 @@ ADMIN_GUIDE_SOURCES: list[tuple[str, str, str | None, str | None]] = [
         "Begin/Restart controls launch the background chat contact. Cannot be nested in "
         "another guide-driven view.",
     ),
-]
+)
 
 
 @dataclass
@@ -648,7 +649,9 @@ def _admin_guide_url(slug: str, *, ext: str = "html") -> str:
 
 
 def fetch_admin_guide_entries(
-    sources: list[tuple[str, str, str | None, str | None]] = ADMIN_GUIDE_SOURCES,
+    sources: Sequence[
+        tuple[str, str, str | None, str | None]
+    ] = ADMIN_GUIDE_SOURCES,
 ) -> list[AdminGuideEntry]:
     """Fetch + parse each curated admin-guide page; fall back gracefully.
 

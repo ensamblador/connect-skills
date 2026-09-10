@@ -27,6 +27,13 @@ MAX_RETRIES = 6
 BACKOFF_BASE = 2
 REQUEST_TIMEOUT = 30
 
+# CloudSearch structured-query fragment shared by both query branches:
+# drop developer-tools / solution-provider entries and keep English only.
+_BLOG_FILTERS = (
+    "(and (not type: 'developertools') (not type: 'solution_providers')) "
+    "(or (term field=lang 'en')) "
+)
+
 
 def _clean_blog_result(result: dict) -> dict:
     fields = result.get("fields") or {}
@@ -38,6 +45,15 @@ def _clean_blog_result(result: dict) -> dict:
         "link": link,
         "description": fields.get("description", ""),
     }
+
+
+def _format_hit(result: dict) -> str:
+    """Render one cleaned hit as a Title / URL / Snippet block."""
+    return (
+        f"Title: {result.get('title', '')}\n"
+        f"URL: {result.get('link', '')}\n"
+        f"Snippet: {result.get('description', '')}"
+    )
 
 
 def aws_blog_search(
@@ -80,18 +96,12 @@ def aws_blog_search(
 
     if include_blogs:
         clauses = [
-            f"(and '{query}' blog_name:'{b}' type: 'blogs' "
-            f"(and (not type: 'developertools') (not type: 'solution_providers')) "
-            f"(or (term field=lang 'en')) )"
+            f"(and '{query}' blog_name:'{b}' type: 'blogs' {_BLOG_FILTERS})"
             for b in include_blogs
         ]
         q = "or " + " ".join(clauses)
     else:
-        q = (
-            f"and (and '{query}' type: 'blogs' "
-            f"(and (not type: 'developertools') (not type: 'solution_providers')) "
-            f"(or (term field=lang 'en')) )"
-        )
+        q = f"and (and '{query}' type: 'blogs' {_BLOG_FILTERS})"
 
     last_error: Exception | None = None
     for attempt in range(MAX_RETRIES):
@@ -114,13 +124,7 @@ def aws_blog_search(
             if not results:
                 return f"No AWS blog results found for: {query}"
 
-            lines = [
-                f"Title: {r.get('title', '')}\n"
-                f"URL: {r.get('link', '')}\n"
-                f"Snippet: {r.get('description', '')}"
-                for r in results
-            ]
-            return "\n---\n".join(lines)
+            return "\n---\n".join(_format_hit(r) for r in results)
 
         except requests.exceptions.HTTPError as exc:
             last_error = exc

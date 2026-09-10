@@ -35,6 +35,15 @@ def _clean_doc_result(result: dict) -> dict:
     return cleaned
 
 
+def _format_hit(result: dict) -> str:
+    """Render one cleaned hit as a Title / URL / Snippet block."""
+    return (
+        f"Title: {result.get('title', '')}\n"
+        f"URL: {result.get('link', '')}\n"
+        f"Snippet: {result.get('summary', result.get('suggestionBody', ''))}"
+    )
+
+
 def aws_search(query: str, limit: int = 10) -> str:
     """Search AWS documentation and return formatted text results.
 
@@ -74,13 +83,7 @@ def aws_search(query: str, limit: int = 10) -> str:
             if not results:
                 return f"No AWS documentation results found for: {query}"
 
-            lines = [
-                f"Title: {r.get('title', '')}\n"
-                f"URL: {r.get('link', '')}\n"
-                f"Snippet: {r.get('summary', r.get('suggestionBody', ''))}"
-                for r in results
-            ]
-            return "\n---\n".join(lines)
+            return "\n---\n".join(_format_hit(r) for r in results)
 
         except requests.exceptions.HTTPError as exc:
             last_error = exc

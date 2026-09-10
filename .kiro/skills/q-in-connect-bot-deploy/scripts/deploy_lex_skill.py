@@ -172,9 +172,20 @@ def _import_lex_models(region: str):
 def _upload_zip(presigned_url: str, zip_path: Path) -> None:
     """PUT the zip to the Lex-provided presigned URL.
 
-    Uses urllib (stdlib) to avoid an extra dependency.
+    Uses urllib (stdlib) to avoid an extra dependency. The URL comes
+    from ``create_upload_url`` on the Lex client, so it is not
+    caller-controlled, but the scheme is asserted anyway so a
+    non-HTTPS value can never reach ``urlopen`` (blocks ``file://``
+    and other local-read schemes).
     """
+    import urllib.parse
     import urllib.request
+
+    scheme = urllib.parse.urlparse(presigned_url).scheme
+    if scheme != "https":
+        raise ValueError(
+            f"refusing to upload to non-HTTPS presigned URL (scheme={scheme!r})"
+        )
 
     data = zip_path.read_bytes()
     req = urllib.request.Request(
@@ -183,7 +194,8 @@ def _upload_zip(presigned_url: str, zip_path: Path) -> None:
         method="PUT",
         headers={"Content-Type": "application/zip"},
     )
-    with urllib.request.urlopen(req, timeout=120) as resp:  # noqa: S310 — Lex URL
+    # nosemgrep: dynamic-urllib-use-detected (https asserted above)
+    with urllib.request.urlopen(req, timeout=120) as resp:  # noqa: S310  # nosec B310
         if resp.status not in (200, 204):
             raise RuntimeError(f"presigned upload failed: HTTP {resp.status}")
 
@@ -199,6 +211,7 @@ def _wait_import(lex, import_id: str) -> dict[str, Any]:
         if status == "Failed":
             reasons = resp.get("failureReasons") or []
             raise RuntimeError(f"import failed: {reasons or resp}")
+        # nosemgrep: arbitrary-sleep (deliberate poll of an async Lex op)
         time.sleep(POLL_INTERVAL)
     raise TimeoutError(f"import {import_id} did not complete within {IMPORT_TIMEOUT}s")
 
@@ -216,6 +229,7 @@ def _wait_locale_built(lex, bot_id: str, locale_id: str) -> None:
         if status == "Failed":
             reasons = resp.get("failureReasons") or []
             raise RuntimeError(f"locale {locale_id} build failed: {reasons or resp}")
+        # nosemgrep: arbitrary-sleep (deliberate poll of an async Lex op)
         time.sleep(POLL_INTERVAL)
     raise TimeoutError(
         f"locale {locale_id} did not finish building within {BUILD_TIMEOUT}s"
@@ -231,6 +245,7 @@ def _wait_version_available(lex, bot_id: str, version: str) -> None:
             # create_bot_version returns the version number before the version
             # resource is consistently queryable. Tolerate the gap.
             print(f"  version {version}: NotFoundYet", file=sys.stderr)
+            # nosemgrep: arbitrary-sleep (deliberate poll of an async Lex op)
             time.sleep(POLL_INTERVAL)
             continue
         status = resp["botStatus"]
@@ -239,6 +254,7 @@ def _wait_version_available(lex, bot_id: str, version: str) -> None:
             return
         if status == "Failed":
             raise RuntimeError(f"bot version {version} failed: {resp}")
+        # nosemgrep: arbitrary-sleep (deliberate poll of an async Lex op)
         time.sleep(POLL_INTERVAL)
     raise TimeoutError(f"version {version} not available within {BUILD_TIMEOUT}s")
 
