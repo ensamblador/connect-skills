@@ -8,6 +8,77 @@ Everything lives under [`.kiro/`](.kiro). Point Kiro at this folder and
 the skills and steering load themselves. The two MCP servers need one
 config entry each, covered in [Configure mcp.json](#configure-mcpjson).
 
+## Let Kiro do this for you
+
+Fresh clone? Open a Kiro session on this folder and paste the prompt
+below. It covers dependencies, the Chromium binary, `mcp.json`, the
+cached prompts, and a verification pass. Every step has a manual
+equivalent from [Prerequisites](#prerequisites) onward.
+
+````text
+Set up this connect-skills workspace end to end. Work from the workspace
+root. Report what you verified and what you could not.
+
+1. Record the absolute path of uv from `which uv`. If it is missing,
+   stop and point me at
+   https://docs.astral.sh/uv/getting-started/installation/
+
+2. Sync both MCP servers:
+   uv sync --directory .kiro/connect_knowledge_mcp
+   uv sync --directory .kiro/cdk_docs_mcp
+
+3. Install the Playwright Chromium binary, roughly 260 MB, unless a
+   chromium-* directory already sits in ~/Library/Caches/ms-playwright
+   on macOS or ~/.cache/ms-playwright on Linux:
+   uv run --directory .kiro/connect_knowledge_mcp python -m playwright install chromium
+   Only get_view_component_doc needs it. The other seven tools work
+   without it.
+
+4. Write .kiro/settings/mcp.json with two stdio servers, named
+   connect_knowledge and cdk_docs, following the "Configure mcp.json"
+   section of README.md. Use the absolute uv path from step 1 and an
+   absolute --directory path for each server. Relative paths fail with
+   spawn ENOENT. autoApprove the eight connect_knowledge tools and the
+   two cdk_docs tools. Check ~/.kiro/settings/mcp.json first and tell me
+   if either server name is already taken there. If a permission rule
+   blocks writes to .kiro/settings/, print the finished JSON with paths
+   resolved and ask me to save it.
+
+5. Tell me to reconnect both servers from the MCP Server view in the
+   Kiro feature panel. If a server keeps failing on a path that is not
+   in the config, tell me to reload the window.
+
+6. Verify. Both suites should pass, 12 tests then 32:
+   uv run --project .kiro/connect_knowledge_mcp --with pytest --with hypothesis pytest .kiro/scripts/ -q
+   uv run --directory .kiro/cdk_docs_mcp --with pytest --with hypothesis pytest cdk_docs/ -q
+
+   Then call four tools and show me the real output:
+   - get_block_doc with slug invoke-lambda-function-block
+   - get_view_component_doc with slug ui-component-datepicker--with-all,
+     which proves Chromium works
+   - search_cdk_docs for CfnContactFlow
+   - validate_flow_json on flow JSON you deliberately broke, so I can
+     see it catch the errors
+
+   Then dry-run one refresh script, which writes nothing:
+   uv run --project .kiro/connect_knowledge_mcp python .kiro/scripts/refresh_cdk_docs.py --dry-run
+
+7. Optional, and only with AWS credentials for an account that has a
+   Connect AI agents domain. Check whether
+   .kiro/skills/connect-ai-agent-author/system-prompts/ already holds 15
+   YAML files plus _manifest.json. If it does, skip this step. If not,
+   ask me for a region, confirm the domain exists with
+   `aws qconnect list-assistants --region <region>`, and run:
+   uv run --with boto3 python .kiro/scripts/refresh_system_prompts.py --region <region>
+   An empty assistantSummaries means that account has no domain. Say so
+   and move on rather than guessing at other regions.
+
+Two flags to never run: refresh_aws_workshops.py --only and
+refresh_connect_flow_language.py --skip-descriptions. Both corrupt the
+catalog they touch. Never hand-edit a generated steering file either;
+the next refresh overwrites it.
+````
+
 ## Repository layout
 
 ```
@@ -212,7 +283,7 @@ and permissions for `qconnect:ListAssistants`,
 `qconnect:ListAIPrompts`, and `qconnect:GetAIPrompt`.
 
 ```bash
-uv run --with boto3 python .kiro/scripts/refresh_system_prompts.py --region us-west-2
+uv run --with boto3 python .kiro/scripts/refresh_system_prompts.py #optional --region us-west-2
 ```
 
 That writes one YAML per SYSTEM prompt plus `_manifest.json` into
