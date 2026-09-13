@@ -131,12 +131,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     # Reuse the existing bundle parser — keeps a single source of truth
-    # for the Storybook scrape. ``refresh_connect_views.py`` lives in the
-    # hooks tree (moved there for hook self-containment); import it from
-    # there. The module inserts its own dir on sys.path at import time so
-    # its ``_doc_fetcher`` sibling resolves.
-    hooks_scripts_dir = REPO_ROOT / ".kiro" / "hooks" / "scripts"
-    sys.path.insert(0, str(hooks_scripts_dir))
+    # for the Storybook scrape. ``refresh_connect_views.py`` lives in
+    # ``.kiro/scripts``; import it from there. The module inserts its own
+    # dir on sys.path at import time so its ``_doc_fetcher`` sibling
+    # resolves.
+    refresh_scripts_dir = REPO_ROOT / ".kiro" / "scripts"
+    sys.path.insert(0, str(refresh_scripts_dir))
     from refresh_connect_views import (  # noqa: PLC0415
         INDEX_URL,
         discover_main_bundle_url,

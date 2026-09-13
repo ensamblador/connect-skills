@@ -110,8 +110,8 @@ reference in
 | `search_docs` | Canonical answers from `docs.aws.amazon.com` |
 | `search_blogs` | Patterns and launches from the AWS blogs |
 | `search_repost` | Debugging and community Q&A from `repost.aws` |
-| `get_block_doc` | Parsed admin-guide flow-block page |
-| `get_action_doc` | Parsed Flow language action page |
+| `get_block_doc` | Admin-guide flow-block page as markdown, whole or one section |
+| `get_action_doc` | Flow language action page as markdown, whole or one section |
 | `get_view_component_doc` | Rendered View Dictionary props table |
 | `validate_flow_json` | Structural validation of flow JSON |
 | `validate_view_json` | Structural validation of view JSON |

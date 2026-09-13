@@ -2,17 +2,30 @@
 
 Two entry points:
 
-    get_block_doc(slug)   → admin-guide flow-block page
+    get_block_doc(slug, section=None)   → admin-guide flow-block page
         e.g. slug="invoke-lambda-function-block"
 
-    get_action_doc(slug)  → Flow language action reference page
+    get_action_doc(slug, section=None)  → Flow language action reference page
         e.g. slug="interactions-invokelambdafunction"
 
 Both fetch the markdown source of the page (AWS publishes ``.md``
-alongside ``.html``), split it into named sections by ``## `` heading,
-and surface the most useful fields as named keys plus the full
-``raw_sections`` map as an escape hatch for callers that need
-content the parser doesn't know to extract.
+alongside ``.html``) and return **that markdown**, with relative
+cross-links rewritten to absolute URLs, plus the list of ``## ``
+headings the page contains.
+
+Markdown-first, deliberately. An earlier version mapped headings onto
+fixed keys (``channels``, ``properties``, ``configuration_tips``). AWS
+is migrating these pages to new wording — ``Supported channels`` became
+``Contact types``, ``Properties`` became ``How to configure this
+block``, and the flow-type bullet list became a table — which silently
+emptied those keys on 10 of 58 block pages while the content sat right
+there in the page. Worse, the empty value was indistinguishable from a
+legitimately empty one.
+
+Splitting on ``## `` hardcodes no heading names, so it cannot drift.
+The ``section`` argument covers the one thing the field mapping was
+genuinely good for, returning a slice instead of the whole page, and it
+reports a miss instead of returning empty.
 """
 
 from __future__ import annotations
@@ -22,6 +35,7 @@ import re
 from typing import Any
 
 import requests
+from requests.utils import get_encoding_from_headers
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +53,36 @@ FLOW_LANGUAGE_ROOT = "https://docs.aws.amazon.com/connect/latest/devguide"
 # ----- fetching -----------------------------------------------------------
 
 
+def _decoded_text(response: requests.Response) -> str:
+    """Return ``response.text`` decoded with the right charset.
+
+    ``requests`` derives ``response.encoding`` solely from the ``charset``
+    parameter of the ``Content-Type`` header, falling back to the RFC 2616
+    default of ISO-8859-1 for ``text/*`` when none is present. Decoding
+    UTF-8 bytes as Latin-1 mangles every multi-byte sequence: an en dash
+    (U+2013, ``e2 80 93``) arrives as ``â\\x80\\x93``.
+
+    AWS currently serves the ``.md`` sources this module fetches *with*
+    ``charset=utf-8``, so that path is fine today. This guard removes the
+    dependency on an upstream header we do not control, and keeps the
+    module correct if it is ever pointed at an ``.html`` page — those are
+    served as a bare ``text/html`` and do exhibit the corruption.
+
+    A charset the server actually declares is honoured.
+    """
+    content_type = response.headers.get("content-type", "")
+    if "charset=" in content_type.lower():
+        response.encoding = get_encoding_from_headers(response.headers)
+    else:
+        # Bare ``text/*``: requests would default to ISO-8859-1 here.
+        response.encoding = response.apparent_encoding or "utf-8"
+    return response.text
+
+
 def _fetch(url: str) -> str:
     r = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT)
     r.raise_for_status()
-    return r.text
+    return _decoded_text(r)
 
 
 # ----- markdown structure parsing ----------------------------------------
@@ -63,7 +103,13 @@ def _parse_top_title(markdown: str) -> str | None:
 
 
 def _parse_lead_paragraph(markdown: str) -> str | None:
-    """Return the first paragraph after the top heading, before any ``## `` section."""
+    """Return the first paragraph after the top heading, before any ``## `` section.
+
+    Not used by the public fetchers, which return markdown verbatim.
+    ``.kiro/scripts/refresh_connect_views.py`` imports it (lazily) to derive
+    one-line blurbs for the admin-guide entries in the views catalog, so keep
+    it even though nothing in this module calls it.
+    """
     # Drop everything from the first ``## `` section onward.
     cut = _SECTION_RE.split(markdown, maxsplit=1)[0]
     # Drop everything up to and including the top ``# `` heading line.
@@ -99,136 +145,138 @@ def _split_sections(markdown: str) -> dict[str, str]:
     return out
 
 
-# ----- channel-table extraction (block pages only) -----------------------
+# ----- relative-link rewriting -------------------------------------------
 
 
-_CHANNEL_TABLE_HEADER_RE = re.compile(
-    r"^\|\s*Channel\s*\|\s*Supported\?\s*\|\s*$", re.MULTILINE
-)
+# AWS's ``.md`` sources cross-link with bare relative targets like
+# ``(set-contact-attributes.md)`` or ``(connect-lambda-functions.md#anchor)``.
+# Those resolve to nothing for a caller reading the markdown out of band, so
+# rewrite them to absolute ``.html`` URLs against the page's own doc root.
+# Absolute targets (http/https/mailto) and in-page anchors are left alone.
+_RELATIVE_MD_LINK_RE = re.compile(r"\]\((?!https?://|mailto:|#)([^)\s]+?)\.md(#[^)\s]*)?\)")
 
 
-def _extract_channels(supported_channels_section: str) -> dict[str, str]:
-    """Pull the Voice/Chat/Task/Email rows out of the Supported channels section."""
-    channels: dict[str, str] = {}
-    if not _CHANNEL_TABLE_HEADER_RE.search(supported_channels_section):
-        return channels
-    for line in supported_channels_section.splitlines():
-        line = line.strip()
-        if not line.startswith("|") or "|" not in line[1:]:
-            continue
-        cells = [c.strip() for c in line.strip("|").split("|")]
-        if len(cells) != 2:
-            continue
-        ch, val = cells
-        if ch in {"Voice", "Chat", "Task", "Email"}:
-            channels[ch] = val
-    return channels
+def _rewrite_relative_links(markdown: str, root: str) -> str:
+    """Turn relative ``.md`` cross-links into absolute ``.html`` URLs."""
+
+    def _sub(m: re.Match[str]) -> str:
+        stem, anchor = m.group(1), m.group(2) or ""
+        return f"]({root}/{stem}.html{anchor})"
+
+    return _RELATIVE_MD_LINK_RE.sub(_sub, markdown)
 
 
-# ----- flow-types extraction ----------------------------------------------
+# ----- section selection --------------------------------------------------
 
 
-def _extract_bullet_list(section: str) -> list[str]:
-    """Pull a leading bullet list out of a section body."""
-    items: list[str] = []
-    for line in section.splitlines():
-        s = line.strip()
-        if s.startswith("+ ") or s.startswith("- "):
-            items.append(s[2:].strip())
-        elif items and not s:
-            # blank line after the list ends the list
-            break
-    return items
+def _select_section(sections: dict[str, str], wanted: str) -> tuple[str, str] | None:
+    """Resolve a caller-supplied section name against the real headings.
+
+    Matching is deliberately forgiving, because heading wording is AWS's to
+    change: exact, then case-insensitive, then case-insensitive substring.
+    Returns ``(heading, body)`` or ``None`` when nothing matches. It never
+    guesses silently — the caller reports the miss along with the real
+    heading list.
+    """
+    if wanted in sections:
+        return wanted, sections[wanted]
+    low = wanted.strip().lower()
+    for heading, body in sections.items():
+        if heading.lower() == low:
+            return heading, body
+    for heading, body in sections.items():
+        if low in heading.lower():
+            return heading, body
+    return None
 
 
-# ----- API-reference: corresponding-block link ---------------------------
+def _page_doc(slug: str, root: str, section: str | None) -> dict[str, Any]:
+    """Shared markdown-first fetch for the admin-guide and devguide pages.
 
+    Returns the page's own markdown rather than a fixed set of parsed
+    fields. AWS reworks these pages' headings (``Supported channels``
+    became ``Contact types``; ``Properties`` became ``How to configure
+    this block``), so any mapping of heading names onto named keys goes
+    stale silently. Splitting on ``## `` does not: it reads whatever
+    headings the page actually has.
 
-_LINK_RE = re.compile(r"\[(?P<text>[^\]]+)\]\((?P<href>[^)]+)\)")
+    ``sections`` lists those headings so a caller can discover the page
+    shape cheaply, then re-request one section by name to keep the
+    payload small.
+    """
+    md = _fetch(f"{root}/{slug}.md")
+    md = _rewrite_relative_links(md, root)
 
+    title = _parse_top_title(md) or slug
+    # Block pages title as "Flow block in <product>: <Block name>".
+    name = title.split(":", 1)[1].strip() if ":" in title else title
+    sections = _split_sections(md)
 
-def _extract_first_link(section: str) -> tuple[str, str] | None:
-    m = _LINK_RE.search(section)
-    if not m:
-        return None
-    return m.group("text").strip(), m.group("href").strip()
+    doc: dict[str, Any] = {
+        "slug": slug,
+        "name": name,
+        "title": title,
+        "url": f"{root}/{slug}.html",
+        "sections": list(sections),
+        "section": None,
+        "markdown": md,
+    }
+
+    if section is None:
+        return doc
+
+    hit = _select_section(sections, section)
+    if hit is None:
+        doc["markdown"] = ""
+        doc["error"] = (
+            f"No section matching {section!r} on this page. "
+            f"Available sections: {', '.join(sections) or '(none)'}. "
+            f"Omit 'section' to get the whole page."
+        )
+        return doc
+
+    heading, body = hit
+    doc["section"] = heading
+    doc["markdown"] = f"## {heading}\n\n{body}".rstrip() + "\n"
+    return doc
 
 
 # ----- public API ---------------------------------------------------------
 
 
-def get_block_doc(slug: str) -> dict[str, Any]:
-    """Fetch and parse an admin-guide flow-block page.
+def get_block_doc(slug: str, section: str | None = None) -> dict[str, Any]:
+    """Fetch an admin-guide flow-block page as markdown.
 
     Args:
         slug: The page slug (no extension), e.g.
             ``invoke-lambda-function-block`` or ``get-customer-input``.
+        section: Optional ``## `` heading to return instead of the whole
+            page, matched exactly, then case-insensitively, then by
+            substring. Use it to keep the payload small once
+            ``sections`` has told you what the page contains.
 
     Returns:
-        Dict with ``name``, ``url``, ``description``, ``channels``,
-        ``flow_types``, ``properties``, ``configuration_tips``, plus the
-        full ``raw_sections`` map.
+        Dict with ``slug``, ``name``, ``title``, ``url``, ``sections``
+        (every ``## `` heading on the page), ``section`` (which one was
+        returned, ``None`` for the whole page), and ``markdown``. On a
+        section miss, ``markdown`` is empty and ``error`` explains,
+        listing the real headings.
     """
-    url_md = f"{ADMINGUIDE_ROOT}/{slug}.md"
-    url_html = f"{ADMINGUIDE_ROOT}/{slug}.html"
-    md = _fetch(url_md)
-
-    title = _parse_top_title(md) or slug
-    name = title.split(":", 1)[1].strip() if ":" in title else title
-
-    sections = _split_sections(md)
-
-    return {
-        "name": name,
-        "title": title,
-        "url": url_html,
-        "description": sections.get("Description") or _parse_lead_paragraph(md),
-        "channels": _extract_channels(sections.get("Supported channels", "")),
-        "flow_types": _extract_bullet_list(sections.get("Flow types", "")),
-        "properties": sections.get("Properties"),
-        "configuration_tips": sections.get("Configuration tips"),
-        "raw_sections": sections,
-    }
+    return _page_doc(slug, ADMINGUIDE_ROOT, section)
 
 
-def get_action_doc(slug: str) -> dict[str, Any]:
-    """Fetch and parse a Flow language action reference page.
+def get_action_doc(slug: str, section: str | None = None) -> dict[str, Any]:
+    """Fetch a Flow language action reference page as markdown.
 
     Args:
         slug: The page slug (no extension), e.g.
             ``interactions-invokelambdafunction`` or
             ``contact-actions-tagcontact``.
+        section: Optional ``## `` heading to return instead of the whole
+            page. ``"Parameter object"`` is the usual one when writing
+            flow JSON.
 
     Returns:
-        Dict with ``name``, ``url``, ``description``, ``parameter_object``,
-        ``results_and_conditions``, ``errors``, ``restrictions``,
-        ``corresponding_block``, plus the full ``raw_sections`` map.
+        Same shape as :func:`get_block_doc`.
     """
-    url_md = f"{FLOW_LANGUAGE_ROOT}/{slug}.md"
-    url_html = f"{FLOW_LANGUAGE_ROOT}/{slug}.html"
-    md = _fetch(url_md)
-
-    name = _parse_top_title(md) or slug
-    description = _parse_lead_paragraph(md)
-    sections = _split_sections(md)
-
-    corresponding = None
-    corr_section = sections.get("Corresponding block in the UI")
-    if corr_section:
-        link = _extract_first_link(corr_section)
-        if link:
-            corresponding = {"text": link[0], "url": link[1]}
-
-    errors_list = _extract_bullet_list(sections.get("Errors", ""))
-
-    return {
-        "name": name,
-        "url": url_html,
-        "description": description,
-        "parameter_object": sections.get("Parameter object"),
-        "results_and_conditions": sections.get("Results and conditions"),
-        "errors": errors_list,
-        "restrictions": sections.get("Restrictions"),
-        "corresponding_block": corresponding,
-        "raw_sections": sections,
-    }
+    return _page_doc(slug, FLOW_LANGUAGE_ROOT, section)

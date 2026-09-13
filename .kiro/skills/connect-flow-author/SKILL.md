@@ -262,10 +262,12 @@ Rules:
   `EndFlowExecution`, `TransferToQueue`, `TransferToFlow`),
   set `Transitions: {}`.
 - For each non-trivial Action's `Parameters`, call `get_action_doc`
-  with the slug of the action (link is in
-  `#connect-flow-language`) and use the returned `parameter_object`
-  block as the source of truth for required and optional fields. Do
-  not invent parameter names from memory.
+  with the slug of the action (link is in `#connect-flow-language`)
+  and `section="Parameter object"`. Use the returned `markdown` as the
+  source of truth for required and optional fields. Do not invent
+  parameter names from memory. Omit `section` when you also need the
+  errors, results, or restrictions; `sections` in the response lists
+  what that page carries.
 - Conditions: `Operator` is one of the eight values in the grammar;
   `Operands` follow the grammar's rules. Nesting capped at 5; total
   sub-conditions capped at 50.
@@ -436,7 +438,9 @@ plus the modules and Nova Sonic guidance.
 
 - Phone numbers in external transfers must be in **E.164** format
   (drop the national trunk prefix; prefix with `+` and country
-  code). E.g. UK `07911 123456` → `+447911123456`.
+  code). E.g. UK `07700 900123` → `+447700900123`.
+  That is Ofcom's reserved drama range (`07700 900000`–`07700 900999`);
+  use it in examples rather than a number that could be live.
 - All countries used for external transfer or outbound dialing must
   be added to the instance's service quota. Confirm before deploy.
 

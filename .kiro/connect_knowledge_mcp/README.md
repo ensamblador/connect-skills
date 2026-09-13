@@ -100,43 +100,72 @@ Out: sections grouped under `Questions`, `Articles`, and
 ### get_block_doc
 
 ```python
-get_block_doc(slug: str) -> dict[str, Any]
+get_block_doc(slug: str, section: str | None = None) -> dict[str, Any]
 ```
 
-Fetches and parses an admin-guide flow-block page. Use it when the
+Fetches an admin-guide flow-block page as markdown. Use it when the
 one-line entry in the `connect-blocks` steering catalog is not enough.
 Pair it with `get_action_doc` when you also need the flow JSON shape.
 
 In: `slug`, the URL stem under `/connect/latest/adminguide/`, without
 extension. Examples: `invoke-lambda-function-block`,
 `get-customer-input`, `customer-profiles-block`. The
-`connect-blocks` catalog links carry the slug.
+`connect-blocks` catalog links carry the slug. Optionally `section`, a
+`##` heading to return on its own.
 
-Out: dict with `name`, `title`, `url`, `description`, `channels` (the
-Voice, Chat, Task, Email matrix), `flow_types`, `properties` as full
-markdown, `configuration_tips`, and `raw_sections` holding every
-section the parser does not surface as a named field.
+Out: dict with `slug`, `name`, `title`, `url`, `sections` listing every
+`##` heading on the page in order, `section` naming which one was
+returned or `None` for the whole page, and `markdown` carrying the
+content with relative cross-links rewritten to absolute URLs. A
+`section` that matches nothing yields an empty `markdown` plus an
+`error` listing the real headings.
 
 ### get_action_doc
 
 ```python
-get_action_doc(slug: str) -> dict[str, Any]
+get_action_doc(slug: str, section: str | None = None) -> dict[str, Any]
 ```
 
-Fetches and parses a Flow language action reference page. Use it when
+Fetches a Flow language action reference page as markdown. Use it when
 generating, validating, or debugging flow JSON. The
 `connect-flow-language` catalog one-liners are not sufficient for
 writing JSON on their own.
 
 In: `slug`, the URL stem under `/connect/latest/devguide/`. Examples:
 `interactions-invokelambdafunction`, `contact-actions-tagcontact`,
-`flow-control-actions-loop`.
+`flow-control-actions-loop`. Pass `section="Parameter object"` for just
+the Parameters schema, which is the usual need when writing flow JSON.
 
-Out: dict with `name`, `url`, `description`, `parameter_object` as raw
-markdown of the Parameters schema, `results_and_conditions`, `errors`
-as a list of error descriptions, `restrictions`,
-`corresponding_block` linking the matching admin-guide block, and
-`raw_sections`.
+Out: same shape as `get_block_doc`.
+
+### Why these two return markdown
+
+Both pages are published by AWS as `.md` alongside `.html`, and the
+consumer is a model that reads markdown natively, so there is little to
+gain from pre-digesting them into fixed fields.
+
+There was a cost, though. An earlier version mapped `##` headings onto
+named keys, and AWS is migrating these pages to new wording:
+`Supported channels` became `Contact types`, `Properties` became
+`How to configure this block`, and the flow-type bullet list became a
+table. That silently emptied `channels`, `flow_types`, and `properties`
+on 10 of the 58 catalogued blocks, including `play`,
+`get-customer-input`, `transfer-to-queue`, and `show-view-block`. The
+content was sitting in the page the whole time, and an empty value was
+indistinguishable from a legitimately empty one.
+
+It did not even save tokens. Because the old shape returned
+`raw_sections` (the whole document) *plus* named slices of it, the
+payload ran 1.0x to 1.6x the size of the raw markdown.
+
+Splitting on `##` hardcodes no heading names, so it cannot drift. The
+`section` argument covers the one thing the field mapping was good for,
+returning a slice: `Contact types` on `get-customer-input` is 267
+characters against 31,000 for the whole page.
+
+The other two doc tools still parse, and should. `get_cdk_construct_doc`
+reads Sphinx HTML and `get_view_component_doc` reads a JavaScript-
+rendered Storybook page, so neither has a markdown source to forward.
 
 ### get_view_component_doc
 

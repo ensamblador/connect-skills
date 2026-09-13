@@ -135,13 +135,19 @@ def search_repost(
 
 
 @mcp.tool()
-def get_block_doc(slug: str) -> dict[str, Any]:
-    """Fetch and parse an admin-guide flow-block reference page.
+def get_block_doc(slug: str, section: str | None = None) -> dict[str, Any]:
+    """Fetch an admin-guide flow-block reference page as markdown.
 
     Use this when you need the full per-block detail (channel matrix,
     flow types, properties, configuration tips) beyond what the
     ``connect-blocks`` steering catalog one-liner provides. Pair with
     ``get_action_doc`` when also working with the Flow language JSON.
+
+    Returns the page's own markdown rather than a fixed set of parsed
+    fields, because AWS keeps rewording these headings: some pages say
+    ``Supported channels`` and others ``Contact types``; some say
+    ``Properties`` and others ``How to configure this block``. Read
+    ``sections`` to see what a given page actually has.
 
     Args:
         slug: The page slug (without extension) of the block's admin
@@ -150,20 +156,28 @@ def get_block_doc(slug: str) -> dict[str, Any]:
             slug is the URL stem under ``/connect/latest/adminguide/``.
             You can find it from the link in the ``connect-blocks``
             steering catalog.
+        section: Optional ``## `` heading to return on its own instead
+            of the whole page. Matched against the real heading text:
+            exact first, then case-insensitively, then by substring, so
+            ``"contact types"`` and ``"types"`` both find
+            ``Contact types``. Some block pages run past 30,000
+            characters, so once ``sections`` has shown you the shape,
+            re-request just the part you need.
 
     Returns:
-        Dict with ``name``, ``title``, ``url``, ``description``,
-        ``channels`` (Voice/Chat/Task/Email matrix), ``flow_types``,
-        ``properties`` (full markdown), ``configuration_tips``, plus
-        the full ``raw_sections`` map for any section the parser does
-        not surface as a named field.
+        Dict with ``slug``, ``name``, ``title``, ``url``, ``sections``
+        (every ``## `` heading on the page, in order), ``section``
+        (which one was returned, ``None`` for the whole page), and
+        ``markdown`` (the content, with relative cross-links rewritten
+        to absolute URLs). If ``section`` matches nothing, ``markdown``
+        is empty and ``error`` lists the real headings.
     """
-    return _get_block_doc(slug)
+    return _get_block_doc(slug, section)
 
 
 @mcp.tool()
-def get_action_doc(slug: str) -> dict[str, Any]:
-    """Fetch and parse a Connect Flow language action reference page.
+def get_action_doc(slug: str, section: str | None = None) -> dict[str, Any]:
+    """Fetch a Connect Flow language action reference page as markdown.
 
     Use this when generating, validating, or debugging flow JSON and
     you need the exact ``Parameters`` shape, valid ``ErrorType``
@@ -179,16 +193,18 @@ def get_action_doc(slug: str) -> dict[str, Any]:
             under ``/connect/latest/devguide/``. You can find it
             from the link in the ``connect-flow-language`` steering
             catalog.
+        section: Optional ``## `` heading to return on its own. Pass
+            ``"Parameter object"`` for just the Parameters schema, which
+            is the usual need when writing flow JSON. Others worth
+            knowing: ``Results and conditions``, ``Errors``,
+            ``Restrictions``, ``Corresponding block in the UI``.
 
     Returns:
-        Dict with ``name``, ``url``, ``description``,
-        ``parameter_object`` (raw markdown of the Parameters schema),
-        ``results_and_conditions``, ``errors`` (list of error
-        descriptions), ``restrictions``, ``corresponding_block``
-        (link to the matching admin-guide block), plus the full
-        ``raw_sections`` map.
+        Same shape as ``get_block_doc``: ``slug``, ``name``, ``title``,
+        ``url``, ``sections``, ``section``, ``markdown``, and ``error``
+        on a section miss.
     """
-    return _get_action_doc(slug)
+    return _get_action_doc(slug, section)
 
 
 @mcp.tool()

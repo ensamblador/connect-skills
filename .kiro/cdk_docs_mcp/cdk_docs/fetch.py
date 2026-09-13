@@ -20,6 +20,7 @@ import logging
 import time
 
 import requests
+from requests.utils import get_encoding_from_headers
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,39 @@ class FetchError(RuntimeError):
         self.url = url
         self.reason = reason
         super().__init__(f"Could not retrieve {url}: {reason}")
+
+
+def decoded_text(response: requests.Response) -> str:
+    """Return ``response.text`` decoded with the right charset.
+
+    ``requests`` derives ``response.encoding`` solely from the ``charset``
+    parameter of the ``Content-Type`` header. The CDK reference pages are
+    served as a bare ``text/html`` with no ``charset``, so ``requests``
+    falls back to the RFC 2616 default of ISO-8859-1 — even though the
+    body is UTF-8 and says so in its own ``<meta charset="utf-8">``, which
+    ``requests`` never reads.
+
+    Decoding UTF-8 as Latin-1 tears every multi-byte sequence apart: an en
+    dash (U+2013, ``e2 80 93``), which AWS uses to separate a parameter
+    name from its description, arrives as ``â\\x80\\x93``. The corruption
+    happens before BeautifulSoup sees the document, so no downstream parse
+    can recover it.
+
+    A charset the server actually declares is honoured. Only the missing
+    case is filled in, preferring ``apparent_encoding`` (content sniffing)
+    and falling back to UTF-8.
+
+    The declared encoding is re-derived from the headers rather than read
+    off ``response.encoding``, so this is correct for any ``Response``
+    instead of only those already populated by ``requests``' adapter.
+    """
+    content_type = response.headers.get("content-type", "")
+    if "charset=" in content_type.lower():
+        response.encoding = get_encoding_from_headers(response.headers)
+    else:
+        # Bare ``text/*``: requests would default to ISO-8859-1 here.
+        response.encoding = response.apparent_encoding or "utf-8"
+    return response.text
 
 
 def library_url(library: str) -> str:
@@ -115,7 +149,7 @@ def fetch_page(url: str, *, timeout: int = REQUEST_TIMEOUT) -> str:
                 timeout=timeout,
             )
             response.raise_for_status()
-            return response.text
+            return decoded_text(response)
 
         except requests.exceptions.HTTPError as exc:
             status = exc.response.status_code if exc.response is not None else None
