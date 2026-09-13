@@ -34,9 +34,10 @@ root. Report what you verified and what you could not.
    Only get_view_component_doc needs it. The other seven tools work
    without it.
 
-4. Write .kiro/settings/mcp.json with two stdio servers, named
-   connect_knowledge and cdk_docs, following the "Configure mcp.json"
-   section of README.md. Use the absolute uv path from step 1 and an
+4. Write .kiro/settings/mcp.json by copying .kiro/mcp.example.json and
+   replacing its two placeholders, ABSOLUTE_PATH_TO_UV and
+   ABSOLUTE_PATH_TO_REPO. Its __setup__ key carries the steps; delete
+   that key afterwards. Use the absolute uv path from step 1 and an
    absolute --directory path for each server. Relative paths fail with
    spawn ENOENT. autoApprove the eight connect_knowledge tools and the
    two cdk_docs tools. Check ~/.kiro/settings/mcp.json first and tell me
@@ -48,9 +49,10 @@ root. Report what you verified and what you could not.
    Kiro feature panel. If a server keeps failing on a path that is not
    in the config, tell me to reload the window.
 
-6. Verify. Both suites should pass, 12 tests then 32:
+6. Verify. Three suites should pass, 12 tests, then 41, then 26:
    uv run --project .kiro/connect_knowledge_mcp --with pytest --with hypothesis pytest .kiro/scripts/ -q
-   uv run --directory .kiro/cdk_docs_mcp --with pytest --with hypothesis pytest cdk_docs/ -q
+   uv run --project .kiro/cdk_docs_mcp --with pytest --with hypothesis pytest .kiro/cdk_docs_mcp/cdk_docs/ -q
+   uv run --project .kiro/connect_knowledge_mcp --with pytest python -m pytest .kiro/connect_knowledge_mcp/connect_knowledge/ -q
 
    Then call four tools and show me the real output:
    - get_block_doc with slug invoke-lambda-function-block
@@ -89,8 +91,11 @@ the next refresh overwrites it.
 ├── scripts/                   # refresh scripts for the steering catalogs
 ├── skills/                    # 10 authoring and research workflows
 ├── steering/                  # 13 reference catalogs and conventions
-└── agents/                    # custom agent definitions
+└── mcp.example.json           # template for settings/mcp.json, which is gitignored
 ```
+
+[AGENTS.md](AGENTS.md) at the root carries the commands and boundaries
+for coding agents working on this repo. Tools other than Kiro read it.
 
 Each folder carries its own README:
 [connect_knowledge_mcp](.kiro/connect_knowledge_mcp/README.md),
@@ -354,11 +359,20 @@ every description. Details in
 # refresh-script properties, 12 tests, no network
 uv run --project .kiro/connect_knowledge_mcp --with pytest --with hypothesis pytest .kiro/scripts/ -q
 
-# cdk_docs server, 32 tests
-uv run --directory .kiro/cdk_docs_mcp --with pytest --with hypothesis pytest cdk_docs/ -q
+# cdk_docs server, 41 tests
+uv run --project .kiro/cdk_docs_mcp --with pytest --with hypothesis pytest .kiro/cdk_docs_mcp/cdk_docs/ -q
+
+# connect_knowledge server, 26 tests, no network
+uv run --project .kiro/connect_knowledge_mcp --with pytest python -m pytest .kiro/connect_knowledge_mcp/connect_knowledge/ -q
+
+# no-secrets scanner, 16 tests
+cd .kiro/skills/connect-iac-cdk-author/scripts && python3 -m unittest test_secrets_scan
 ```
 
-Both suites are largely property-based through `hypothesis`, which is
-why it is passed explicitly. `cdk_docs/test_live_fetch.py` hits the
-network; the rest parse fixtures. The `connect_knowledge` package
-carries no tests of its own.
+The first two suites are largely property-based through `hypothesis`,
+which is why it is passed explicitly. `cdk_docs/test_live_fetch.py` hits
+the network and self-skips when offline; every other test parses
+fixtures.
+
+Agents working on this repo should read [AGENTS.md](AGENTS.md), which
+carries these commands alongside the destructive-flag boundaries.
