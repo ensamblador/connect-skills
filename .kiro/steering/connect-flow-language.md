@@ -1,6 +1,6 @@
 ---
 inclusion: manual
-last_refreshed: 2026-09-10
+last_refreshed: 2026-09-22
 action_count: 56
 source_urls:
   - https://docs.aws.amazon.com/connect/latest/devguide/flow-language-actions.html
@@ -8,7 +8,7 @@ source_urls:
   - https://docs.aws.amazon.com/connect/latest/devguide/flow-control-actions.html
   - https://docs.aws.amazon.com/connect/latest/devguide/interactions.html
   - https://docs.aws.amazon.com/connect/latest/devguide/participant-actions.html
-content_checksum: sha256:310c45593e013075
+content_checksum: sha256:7d738328fd6e9889
 ---
 
 # Connect Flow language reference
@@ -160,7 +160,7 @@ validator passes:
 | [UpdateContactAttributes](https://docs.aws.amazon.com/connect/latest/devguide/contact-actions-updatecontactattributes.html) | Contact | Sets a collection of contact attributes on either the current contact or the related contact. With this type of operation, either all attributes are set or none are set. |
 | [UpdateContactCallbackNumber](https://docs.aws.amazon.com/connect/latest/devguide/contact-actions-updatecontactcallbacknumber.html) | Contact | Updates the contact callback number, which is the number used by the CreateCallbackContact action. This value defaults to the customer participant caller ID if this action is never used. |
 | [UpdateContactData](https://docs.aws.amazon.com/connect/latest/devguide/contact-actions-updatecontactdata.html) | Contact | Sets a collection of connect defined attributes on specified contact. With this type of operation, either all attributes are set or none are set. |
-| [UpdateContactEventHooks](https://docs.aws.amazon.com/connect/latest/devguide/contact-actions-updatecontacteventhooks.html) | Contact | Sets one or more contact event hooks, which are flows associated with contact events, such as customer whisper or agent hold. For more information, see [Contact records data model](https://docs.aws.amazon.com/connect/latest/adminguide/ctr-data-model.html). The following event hooks are valid: + AgentHold + AgentWhisper + CustomerHold + CustomerQueue + CustomerRemaining + CustomerWhisper + DefaultAgentUI + DisconnectAgentUI + PauseContact + ResumeContact |
+| [UpdateContactEventHooks](https://docs.aws.amazon.com/connect/latest/devguide/contact-actions-updatecontacteventhooks.html) | Contact | Sets one or more contact event hooks, which are flows associated with contact events, such as customer whisper or agent hold. For more information, see [Set event flow](https://docs.aws.amazon.com/connect/latest/adminguide/set-event-flow.html). The following event hooks are valid: + AgentHold + AgentWhisper + CustomerHold + CustomerQueue + CustomerRemaining + CustomerWhisper + DefaultAgentUI + DisconnectAgentUI + PauseContact + ResumeContact |
 | [UpdateContactMediaProcessing](https://docs.aws.amazon.com/connect/latest/devguide/contact-actions-updatecontactmediaprocessing.html) | Contact | Allows customers to configure their own Lambda processor, which will be applied to in-flight messages. |
 | [UpdateContactMediaStreamingBehavior](https://docs.aws.amazon.com/connect/latest/devguide/contact-actions-updatecontactmediastreamingbehavior.html) | Contact | Enables or disables contact media streaming for a set of participants. |
 | [UpdateContactRecordingAndAnalyticsBehavior](https://docs.aws.amazon.com/connect/latest/devguide/contact-actions-updatecontactrecordingandanalyticsbehavior.html) | Contact | Sets contact recording behavior, including analysis behavior and which participants of the contact to record. |

@@ -35,3 +35,16 @@ dist/
 # .kiro/mcp.example.json; its __setup__ key carries the instructions:
 #   cp .kiro/mcp.example.json .kiro/settings/mcp.json
 .kiro/settings/mcp.json
+
+# Claude Code's project-scope equivalent of the above, written by
+#   claude mcp add <name> -s project -- <abs path to uv> run --directory <abs path to repo>/...
+# Same absolute paths, same reason to keep it out of git. Recreate it from
+# .kiro/mcp.example.json's two server entries.
+.mcp.json
+
+# === Claude Code personal overrides ===
+# Per-user MCP approvals. The versioned, machine-independent counterpart is
+# .claude/settings.json. Only this one file is ignored: everything else under
+# .claude/ is versioned, including the skills -> ../.kiro/skills symlink and
+# CLAUDE.md at the repo root.
+.claude/settings.local.json

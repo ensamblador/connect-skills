@@ -25,9 +25,12 @@ history rewrite.
    license and absent from the public docs. Gitignored on purpose. Each
    user pulls their own copy. See
    [NOTICE.md](.kiro/skills/connect-ai-agent-author/system-prompts/NOTICE.md).
-2. **Never commit `.kiro/settings/mcp.json`.** It holds absolute paths
-   naming one machine and one user account. Gitignored. The versioned
-   template is [`.kiro/mcp.example.json`](.kiro/mcp.example.json).
+2. **Never commit `.kiro/settings/mcp.json` or `.mcp.json`.** Both hold
+   absolute paths naming one machine and one user account. Both
+   gitignored. The versioned template for the Kiro file is
+   [`.kiro/mcp.example.json`](.kiro/mcp.example.json); the Claude Code
+   file is recreated with the two `claude mcp add -s project` commands in
+   [Commands](#mcp-servers-in-claude-code).
 3. **Never run `refresh_aws_workshops.py --only`.** Its help text
    promises a merge. It degrades the other 13 workshops, replacing real
    titles with slug stubs and dropping every module list, then rewrites
@@ -71,6 +74,67 @@ uv sync --directory .kiro/cdk_docs_mcp
 # Only get_view_component_doc needs Chromium, a one-time ~260 MB download
 uv run --directory .kiro/connect_knowledge_mcp python -m playwright install chromium
 ```
+
+### MCP servers in Claude Code
+
+Claude Code ignores `.kiro/settings/mcp.json`. It reads project-scope
+servers from `.mcp.json` at the repo root, then refuses to start them
+until the project approves them. Run from the repo root, so `$PWD` and
+`which uv` resolve to absolute paths in the written file:
+
+```bash
+claude mcp add connect_knowledge -s project -- "$(which uv)" run --directory "$PWD/.kiro/connect_knowledge_mcp" python connect_knowledge_mcp.py
+claude mcp add cdk_docs -s project -- "$(which uv)" run --directory "$PWD/.kiro/cdk_docs_mcp" python cdk_docs_mcp.py
+```
+
+Approve both without waiting for the startup prompt by naming them in
+`.claude/settings.json`, versioned and machine-independent, or in
+`.claude/settings.local.json` to keep it personal:
+
+```json
+{
+  "enabledMcpjsonServers": ["connect_knowledge", "cdk_docs"],
+  "permissions": { "allow": ["mcp__connect_knowledge", "mcp__cdk_docs"] }
+}
+```
+
+`enabledMcpjsonServers` is the approval gate, the counterpart to
+answering the prompt. `permissions.allow` is the counterpart to Kiro's
+`autoApprove`, which `.mcp.json` has no field for. Both servers are
+read-only over public AWS docs and take no credentials, so a
+whole-server allow rule is appropriate; per-tool rules are
+`mcp__<server>__<tool>`.
+
+Verify with `claude mcp list`; both lines should read `✔ Connected`. In
+session, `/mcp` shows approval state and reconnects a server after you
+edit its code. `claude mcp reset-project-choices` clears this project's
+approvals when one was rejected by mistake. Full walkthrough, including
+the `${HOME}` expansion Claude Code allows and Kiro does not, is in
+[README](README.md#claude-code).
+
+### Versioned Claude Code files
+
+Two artifacts make Claude Code work here, and both belong in git:
+
+```bash
+git add .claude/skills   # the symlink itself, stored as a mode 120000 blob
+git add CLAUDE.md        # the #name mapping and the concise.md import
+```
+
+Verify the symlink went in as a link rather than a directory of copies:
+
+```bash
+git ls-files -s .claude/skills   # expect: 120000 <sha> 0  .claude/skills
+```
+
+`git cat-file -p <sha>` prints `../.kiro/skills`. Because that target is
+relative, the link resolves in any clone path under any account. If the
+mode reads `100644`, git recorded a text file instead of a link; delete
+it, recreate with `ln -s ../.kiro/skills .claude/skills`, and re-add.
+
+`.claude/settings.local.json` is gitignored and stays personal.
+`.claude/settings.json` is the versioned counterpart when approvals
+should be shared.
 
 ### Test
 
@@ -144,6 +208,12 @@ uv run --with boto3 python .kiro/scripts/refresh_system_prompts.py --dry-run --r
 ├── steering/                # 13 catalogs: 9 generated, 4 hand-authored
 ├── settings/mcp.json        # gitignored, machine-local
 └── mcp.example.json         # versioned template for the above
+
+.claude/
+├── skills -> ../.kiro/skills   # versioned symlink, Claude Code's skill path
+└── settings.local.json         # gitignored, personal approvals
+.mcp.json                       # gitignored, Claude Code's MCP config
+CLAUDE.md                       # imports AGENTS.md, maps #name to steering
 ```
 
 Stack: Python 3.11 pinned via `.python-version` in both servers, `uv` for
@@ -228,3 +298,24 @@ characters; use a bulleted body for unrelated changes. Work on `main`.
 - Absolute paths are mandatory in `mcp.json`. Kiro expands neither `~`
   nor `${workspaceFolder}` in `command` or `args`; relative paths fail
   with `spawn ENOENT`.
+- `.claude/skills` is a symlink to `.kiro/skills`, not a copy. It is how
+  Claude Code sees the ten skills. Deleting it or replacing it with
+  copied files forks the skills into two diverging trees. Edit through
+  `.kiro/skills/`.
+- That symlink is the directory, and the docs only specify the per-skill
+  form. Claude Code documents symlinking an individual `<skill-name>`
+  entry, reading `SKILL.md` from the target. Linking the whole `skills`
+  directory is undocumented. Verified working on `claude 2.1.280.929`; if
+  a version bump makes `/connect-flow-author` disappear, this is the first
+  thing to check. The documented fallback is ten per-skill links inside a
+  real `.claude/skills/` directory.
+- Every non-plugin skill path ends in a hardcoded `.claude/skills`
+  segment, so the symlink cannot be dropped in favour of pointing Claude
+  Code straight at `.kiro/skills`. `--add-dir <path>` reads only
+  `<path>/.claude/skills`, and `permissions.additionalDirectories` grants
+  file access while loading no skills. The one supported relocation is
+  packaging `.kiro` as a plugin, which trades this single link for a
+  marketplace file, a `plugin.json`, a `.claude/settings.json`, namespaced
+  `/connect-skills:<name>` invocation, and a component scan that starts
+  reading `.kiro/agents/`, `.kiro/hooks/`, `.kiro/commands/` and
+  `.kiro/.mcp.json`. Not worth it while the link works.

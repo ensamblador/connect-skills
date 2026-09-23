@@ -81,6 +81,20 @@ catalog they touch. Never hand-edit a generated steering file either;
 the next refresh overwrites it.
 ````
 
+The same prompt works in Claude Code with step 4 swapped for this, and
+with step 5 dropped:
+
+````text
+4. Write .mcp.json at the repo root instead of .kiro/settings/mcp.json,
+   by running from the repo root:
+   claude mcp add connect_knowledge -s project -- "$(which uv)" run --directory "$PWD/.kiro/connect_knowledge_mcp" python connect_knowledge_mcp.py
+   claude mcp add cdk_docs -s project -- "$(which uv)" run --directory "$PWD/.kiro/cdk_docs_mcp" python cdk_docs_mcp.py
+   Then approve both by adding
+   {"enabledMcpjsonServers": ["connect_knowledge", "cdk_docs"]} to
+   .claude/settings.json, and confirm with `claude mcp list` that both
+   report Connected. Details in README, Configure mcp.json, Claude Code.
+````
+
 ## Repository layout
 
 ```
@@ -184,6 +198,56 @@ Hand-authored files, which no script overwrites:
 Each generated catalog states its own freshness window in a paragraph
 near the top. `#aws-workshops` uses 30 days. The rest use 7.
 
+## Skills and steering in Claude Code
+
+Skills port unchanged. Kiro's `SKILL.md` front matter, `name` plus
+`description`, is the format Claude Code expects, and Claude Code follows
+symlinks when it scans for skills. One relative symlink exposes all ten:
+
+```
+.claude/skills -> ../.kiro/skills
+```
+
+`.kiro/skills` stays the single source. Nothing is copied: `.claude/skills`
+contains zero files and zero bytes, so editing through either path edits
+one inode, and a rename or a `git grep` touches each file once.
+
+The link is versioned, so a fresh clone gets it for free. Git stores a
+symlink as a mode `120000` blob whose content is the literal string
+`../.kiro/skills`; because that target is relative, it resolves in any
+clone directory under any user account.
+
+Recreate it only when a checkout drops it. That happens on Windows
+without developer mode or `core.symlinks=true`, where git materializes
+the link as a text file holding the target path and Claude Code then
+finds no skills:
+
+```bash
+ln -s ../.kiro/skills .claude/skills
+```
+
+Steering has no direct counterpart, so the three Kiro inclusion modes map
+differently:
+
+| Kiro | Claude Code |
+|---|---|
+| `inclusion: always` | An `@.kiro/steering/name.md` import in [CLAUDE.md](CLAUDE.md). Loaded every session, so reserve it for small files. `#concise` is imported this way. |
+| `inclusion: manual`, cited as `#name` | A skill resolves it through the `#name` rule CLAUDE.md states, which retrieves one section or one table row rather than the whole file. Type `@.kiro/steering/<name>.md` yourself only when you want a catalog loaded in full. |
+| `inclusion: fileMatch` | No native equivalent. A `PostToolUse` hook on `Edit\|Write` that tests the path and prints a pointer to the catalog is the deterministic version. No catalog here uses this mode. |
+
+Keep the manual ones manual. The thirteen catalogs total 213 KB and
+`connect-ai-agents.md` alone is 44 KB, so importing them all into
+CLAUDE.md would spend the context window before the first question.
+
+Retrieval is partial by default, which is what keeps the manual mode
+usable. The catalogs are tables and `##`-sectioned notes, so
+`grep -n '^## ' .kiro/steering/<name>.md` gives the section map and a
+second read takes just that section. `Language alignment (CRITICAL)` is
+63 lines of `connect-ai-agents.md` rather than all 843. Catalogs with no
+headings, `connect-blocks.md` among them, are one table: grep the row.
+CLAUDE.md states this rule, so a skill citing `#name` does not need a
+wrapper skill to make the catalog reachable.
+
 ## Prerequisites
 
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/) on
@@ -212,6 +276,12 @@ Skip it and the other seven tools work fine. That one fails with
 `BrowserType.launch: Executable doesn't exist`.
 
 ## Configure mcp.json
+
+Two clients, two files. Kiro reads `.kiro/settings/mcp.json`. Claude Code
+reads `.mcp.json` at the repo root and adds an approval step on top of
+it. Both files are gitignored because both hardcode absolute paths.
+
+### Kiro
 
 Workspace config lives at `.kiro/settings/mcp.json`. User config lives
 at `~/.kiro/settings/mcp.json` and applies across workspaces. Configs
@@ -270,6 +340,121 @@ installer it is `/Users/<you>/.local/bin/uv`.
 After saving, reconnect the servers from the MCP Server view in the Kiro
 feature panel. If a server keeps failing with a path that is not in your
 config, reload the window: Kiro can hold a cached config snapshot.
+
+### Claude Code
+
+Project-scope servers live in `.mcp.json` at the repo root. Claude Code
+does not read `.kiro/settings/mcp.json`. Write the file with the CLI,
+from the repo root, so the shell resolves both paths at add time:
+
+```bash
+claude mcp add connect_knowledge -s project -- "$(which uv)" run --directory "$PWD/.kiro/connect_knowledge_mcp" python connect_knowledge_mcp.py
+claude mcp add cdk_docs -s project -- "$(which uv)" run --directory "$PWD/.kiro/cdk_docs_mcp" python cdk_docs_mcp.py
+```
+
+That writes the `mcpServers` block below. Hand-authoring it is fine too;
+`type` and `env` are optional, and `stdio` is the default transport.
+
+```json
+{
+  "mcpServers": {
+    "connect_knowledge": {
+      "type": "stdio",
+      "command": "/absolute/path/to/uv",
+      "args": [
+        "run",
+        "--directory",
+        "/absolute/path/to/connect-skills/.kiro/connect_knowledge_mcp",
+        "python",
+        "connect_knowledge_mcp.py"
+      ],
+      "env": {}
+    },
+    "cdk_docs": {
+      "type": "stdio",
+      "command": "/absolute/path/to/uv",
+      "args": [
+        "run",
+        "--directory",
+        "/absolute/path/to/connect-skills/.kiro/cdk_docs_mcp",
+        "python",
+        "cdk_docs_mcp.py"
+      ],
+      "env": {}
+    }
+  }
+}
+```
+
+Unlike Kiro, Claude Code expands `${VAR}` and `${VAR:-default}` inside
+`command` and `args`, so `${HOME}/.local/bin/uv` works and survives a
+change of username. There is still no workspace-folder variable, and a
+relative `--directory` still fails with `spawn ENOENT`.
+
+#### Approve the servers
+
+A `.mcp.json` server is inert until approved, since the file is
+repo-supplied and could name any binary. `claude mcp list` shows an
+unapproved one as `⏸ Pending approval`. Three ways to clear it:
+
+- Start Claude Code in this folder and answer the one-time prompt. The
+  answer is stored per project in `~/.claude.json`.
+- Pre-approve by name, which skips the prompt. Put this in
+  `.claude/settings.json` to share it with everyone who clones, or in
+  `.claude/settings.local.json` to keep it personal. Names only, no
+  paths, so either file stays machine-independent:
+
+  ```json
+  {
+    "enabledMcpjsonServers": ["connect_knowledge", "cdk_docs"]
+  }
+  ```
+
+- `"enableAllProjectMcpServers": true` in the same file approves whatever
+  `.mcp.json` happens to hold, including servers added later. Naming the
+  two is narrower and preferred.
+
+`disabledMcpjsonServers` is the inverse list. `claude mcp
+reset-project-choices` clears every approval and rejection for this
+project, which is how you get the prompt back after rejecting one by
+mistake.
+
+#### Auto-approve the tool calls
+
+Kiro's `autoApprove` array has no `.mcp.json` counterpart. Claude Code
+gates tool calls through permission rules instead, in
+`.claude/settings.json` or `.claude/settings.local.json`:
+
+```json
+{
+  "permissions": {
+    "allow": ["mcp__connect_knowledge", "mcp__cdk_docs"]
+  }
+}
+```
+
+Both servers only read public AWS documentation over HTTPS and validate
+JSON in memory. They take no credentials and write nothing, so allowing
+them wholesale carries no more risk than a web fetch. For a narrower
+rule, name single tools as `mcp__<server>__<tool>`, for example
+`mcp__cdk_docs__search_cdk_docs`.
+
+#### Verify
+
+```bash
+claude mcp list
+```
+
+Both entries should read `✔ Connected`. In a session, `/mcp` lists the
+servers, their approval state, and their tools; it also reconnects one
+after you edit its server code. Tools are addressed as
+`mcp__connect_knowledge__search_docs` and friends.
+
+`.mcp.json` is gitignored here for the same reason as
+`.kiro/settings/mcp.json`: it names one `uv` binary and one checkout.
+Recreate it with the two commands above.
+
+### Claude Desktop and Strands
 
 Claude Desktop uses the same `mcpServers` block in
 `~/Library/Application Support/Claude/claude_desktop_config.json`.

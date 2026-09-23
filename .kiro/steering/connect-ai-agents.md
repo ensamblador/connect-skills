@@ -1,6 +1,6 @@
 ---
 inclusion: manual
-last_refreshed: 2026-09-10
+last_refreshed: 2026-09-22
 source_urls:
   - https://docs.aws.amazon.com/connect/latest/adminguide/connect-ai-agent.html
   - https://docs.aws.amazon.com/connect/latest/adminguide/ai-agent-initial-setup.html
@@ -24,16 +24,16 @@ source_urls:
   - https://docs.aws.amazon.com/connect/latest/adminguide/ts-ai-agents-self-service.html
 source_checksums:
   https://docs.aws.amazon.com/connect/latest/adminguide/connect-ai-agent.html: sha256:0ec7ff94d9e5167c
-  https://docs.aws.amazon.com/connect/latest/adminguide/ai-agent-initial-setup.html: sha256:cccd20611369ab16
-  https://docs.aws.amazon.com/connect/latest/adminguide/customize-connect-ai-agents.html: sha256:103b423cead63b8e
+  https://docs.aws.amazon.com/connect/latest/adminguide/ai-agent-initial-setup.html: sha256:00c0d75cf814b048
+  https://docs.aws.amazon.com/connect/latest/adminguide/customize-connect-ai-agents.html: sha256:87a18149a3de7288
   https://docs.aws.amazon.com/connect/latest/adminguide/default-ai-system.html: sha256:6d7bd982bf3f4541
   https://docs.aws.amazon.com/connect/latest/adminguide/create-ai-agents.html: sha256:377309a8616ef453
   https://docs.aws.amazon.com/connect/latest/adminguide/ai-agent-configure-language-support.html: sha256:1145f8800026d2ae
   https://docs.aws.amazon.com/connect/latest/adminguide/use-orchestration-ai-agent.html: sha256:d621b9a5d5091844
-  https://docs.aws.amazon.com/connect/latest/adminguide/create-ai-prompts.html: sha256:1f4f269412b01e5f
+  https://docs.aws.amazon.com/connect/latest/adminguide/create-ai-prompts.html: sha256:0d71ef7a5fb7539d
   https://docs.aws.amazon.com/connect/latest/adminguide/agentic-self-service-prompt-best-practices.html: sha256:4a343878af482275
   https://docs.aws.amazon.com/connect/latest/adminguide/ai-agent-mcp-tools.html: sha256:b81a569dba392935
-  https://docs.aws.amazon.com/connect/latest/adminguide/agentic-self-service.html: sha256:a769fd5c3d499b11
+  https://docs.aws.amazon.com/connect/latest/adminguide/agentic-self-service.html: sha256:ea3a1a5d561f09f0
   https://docs.aws.amazon.com/connect/latest/adminguide/agentic-assistance.html: sha256:e63315394bd25bea
   https://docs.aws.amazon.com/connect/latest/adminguide/ai-agent-security-profile-permissions.html: sha256:2eb84a4f3af64d3c
   https://docs.aws.amazon.com/connect/latest/adminguide/integrate-guides-with-ai-agents.html: sha256:07ff5438151fb6e4
@@ -41,7 +41,7 @@ source_checksums:
   https://docs.aws.amazon.com/connect/latest/adminguide/access-connect-assistant-in-workspace.html: sha256:87ec7db461062fdd
   https://docs.aws.amazon.com/connect/latest/adminguide/use-generative-ai-case-summarization.html: sha256:757a19f7b3de562c
   https://docs.aws.amazon.com/connect/latest/adminguide/ai-generated-note-taking.html: sha256:14a05554bafd4b93
-  https://docs.aws.amazon.com/connect/latest/adminguide/monitor-ai-agents.html: sha256:af3dddc666f643bc
+  https://docs.aws.amazon.com/connect/latest/adminguide/monitor-ai-agents.html: sha256:80537c8e0268d027
   https://docs.aws.amazon.com/connect/latest/adminguide/ts-ai-agents-self-service.html: sha256:6199f5572154e4a3
 ---
 
