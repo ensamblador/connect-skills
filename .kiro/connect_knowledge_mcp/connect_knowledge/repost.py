@@ -49,6 +49,10 @@ BASE_URL = "https://repost.aws"
 REQUEST_TIMEOUT = 15
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 
+# Pause between the three per-section fetches in repost_full_search, so one
+# tool call does not hit repost.aws three times back to back.
+PER_SECTION_SLEEP = 1
+
 # Amazon Connect tag id on re:Post. Used as the default filter so the skill
 # is scoped to Connect content. Override via the ``tag_ids`` argument.
 CONNECT_TAG_ID = "TAC0wz6wJtRbuJVD4X7tUmWA"
@@ -262,7 +266,8 @@ def repost_full_search(
         if section_result.get("error"):
             errors.append(f"{section}: {section_result['error']}")
         if index < len(SECTIONS) - 1:
-            time.sleep(1)  # be polite between requests
+            # nosemgrep: arbitrary-sleep (deliberate re:Post rate limit)
+            time.sleep(PER_SECTION_SLEEP)
     if errors:
         out["_errors"] = errors
     return out
