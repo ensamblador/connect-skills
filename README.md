@@ -108,8 +108,11 @@ with step 5 dropped:
 └── mcp.example.json           # template for settings/mcp.json, which is gitignored
 ```
 
-[AGENTS.md](AGENTS.md) at the root carries the commands and boundaries
-for coding agents working on this repo. Tools other than Kiro read it.
+Two root files sit alongside this one. [USAGE.md](USAGE.md) is the tour
+of what to ask for, grouped from single MCP lookups up to full skill
+workflows, with test prompts and their expected results.
+[AGENTS.md](AGENTS.md) carries the commands and boundaries for coding
+agents working on this repo. Tools other than Kiro read it.
 
 Each folder carries its own README:
 [connect_knowledge_mcp](.kiro/connect_knowledge_mcp/README.md),
