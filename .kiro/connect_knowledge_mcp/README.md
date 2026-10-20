@@ -293,6 +293,15 @@ Stdio server, the way MCP clients launch it:
 uv run python connect_knowledge_mcp.py
 ```
 
+The `connect-knowledge-mcp` console script starts the same server. With
+it, a client can launch the server straight from GitHub through `uvx`,
+with no local clone. Pin a commit SHA so the server does not change
+under you:
+
+```bash
+uvx --from "git+https://github.com/ensamblador/connect-skills@<sha>#subdirectory=.kiro/connect_knowledge_mcp" connect-knowledge-mcp
+```
+
 Nothing is logged to stdout, since stdio carries MCP frames. For
 interactive testing use the inspector:
 

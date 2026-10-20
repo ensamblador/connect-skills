@@ -5,7 +5,7 @@ description = "MCP server exposing Amazon Connect research tools (docs, blogs, r
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "mcp[cli]>=1.14.0",
+    "mcp[cli]>=1.14.0,<2",
     "requests>=2.31",
     "beautifulsoup4>=4.12",
     # Playwright drives get_view_component_doc and the --with-props
@@ -29,6 +29,10 @@ deploy = [
 connect-docs-search = "connect_knowledge.cli:docs_main"
 connect-blog-search = "connect_knowledge.cli:blogs_main"
 connect-repost-search = "connect_knowledge.cli:repost_main"
+# Launches the MCP server over stdio, so a client can start it with
+#   uvx --from "git+https://github.com/ensamblador/connect-skills@<sha>#subdirectory=.kiro/connect_knowledge_mcp" connect-knowledge-mcp
+# without a local clone.
+connect-knowledge-mcp = "connect_knowledge_mcp:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -36,3 +40,8 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["connect_knowledge"]
+
+# The server module sits next to the package, not inside it. Ship it in
+# the wheel so the connect-knowledge-mcp script can import it.
+[tool.hatch.build.targets.wheel.force-include]
+"connect_knowledge_mcp.py" = "connect_knowledge_mcp.py"

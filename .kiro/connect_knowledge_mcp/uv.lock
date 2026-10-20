@@ -321,7 +321,7 @@ deploy = [
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.12" },
     { name = "boto3", marker = "extra == 'deploy'", specifier = ">=1.34" },
-    { name = "mcp", extras = ["cli"], specifier = ">=1.14.0" },
+    { name = "mcp", extras = ["cli"], specifier = ">=1.14.0,<2" },
     { name = "playwright", specifier = ">=1.46" },
     { name = "requests", specifier = ">=2.31" },
 ]

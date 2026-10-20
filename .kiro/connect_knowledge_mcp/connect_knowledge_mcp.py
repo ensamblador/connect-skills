@@ -311,5 +311,10 @@ def validate_view_json(json_str: str) -> dict[str, Any]:
     return _validate_view_json(json_str)
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Run the server over stdio. Entry point of the ``connect-knowledge-mcp`` script."""
     mcp.run(transport="stdio")
+
+
+if __name__ == "__main__":
+    main()
