@@ -564,3 +564,11 @@ fixtures.
 
 Agents working on this repo should read [AGENTS.md](AGENTS.md), which
 carries these commands alongside the destructive-flag boundaries.
+
+## Contributing and license
+
+Contributions follow [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[code of conduct](CODE_OF_CONDUCT.md). This is a personal project, and
+AWS does not support it.
+
+Licensed under [MIT No Attribution](LICENSE).
