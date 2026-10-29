@@ -127,10 +127,14 @@ If a search returns no usable hits, say "no results from <source> for
   specificity. If still empty, tell the user the kit has nothing on
   this and suggest the next move (raise on internal Slack, file a
   question on re:Post, ask AWS support).
-- One source 4xx/5xx → the underlying tool already retries with
-  backoff and returns a string starting with `Error after N retries:`.
-  Surface that error in the caveats section and continue with the
-  other two sources.
+- One source fails: the tool returns a string instead of raising. It
+  reads `Error after N retries:` once 429 or 5xx retries run out, and
+  starts with `Error searching` or `AWS re:Post search failed for:`
+  otherwise. Surface that error in the caveats section and continue
+  with the other two sources.
+- A `search_blogs` reply that starts with `Note:` came from the blog
+  directory keyword fallback. Treat its hits as weaker matches and say
+  so in the caveats.
 - The MCP tools aren't visible → stop and ask the user to configure
   the `connect_knowledge` MCP server (see repo README).
 - Stale launch info → blog posts age. When a finding hinges on a date,

@@ -403,9 +403,16 @@ with connect_knowledge:
 
 ## Failure modes
 
-- 4xx or 5xx from any source. The underlying tool retries with
-  exponential backoff, then returns a string starting with
-  `Error after N retries:` instead of raising.
+- 429 or 5xx from `search_docs` or the blog directory. The tool retries
+  with exponential backoff, then returns a string starting with
+  `Error after N retries:` instead of raising. Any other 4xx returns
+  `Error searching AWS docs:` or `Error searching AWS blogs:` at once.
+- Ranked blog search unavailable. `search_blogs` falls back to the blog
+  directory and starts its reply with a `Note:` line naming the reason.
+  A directory error, if any, follows that line.
+- re:Post failures. `search_repost` does not retry. When every section
+  fails it returns `AWS re:Post search failed for: <query>`, then one
+  error line per section.
 - Empty results. Returns `No AWS <source> results found for: <query>`.
   Broaden the query rather than treating it as a bug.
 - `spawn uv ENOENT` in the client log. The `command` path does not
