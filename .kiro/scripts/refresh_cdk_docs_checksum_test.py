@@ -96,6 +96,12 @@ def _construct_url(library: str, name: str) -> str:
     )
 
 
+def _landing_link(module: str, name: str) -> str:
+    """One construct link as the live module overview page renders it."""
+    href = f"/cdk/api/v2/docs/aws-cdk-lib.{module}.{name}.html"
+    return f'<li><a href="{href}">{name}</a></li>'
+
+
 def _make_landing_html(names: list[str], library: str) -> str:
     """Synthesize a CDK module overview page that links to each construct.
 
@@ -103,11 +109,7 @@ def _make_landing_html(names: list[str], library: str) -> str:
     (``/cdk/api/v2/docs/aws-cdk-lib.<module>.CfnX.html``) so
     ``parse_construct_links`` accepts them as the library's own constructs.
     """
-    links = "".join(
-        f'<li><a href="/cdk/api/v2/docs/aws-cdk-lib.{_module(library)}.{name}.html">'
-        f"{name}</a></li>"
-        for name in names
-    )
+    links = "".join(_landing_link(_module(library), name) for name in names)
     return f"<html><body><ul>{links}</ul></body></html>"
 
 

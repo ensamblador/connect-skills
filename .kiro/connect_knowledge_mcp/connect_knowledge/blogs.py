@@ -214,10 +214,12 @@ def _fetch_ranked(query: str) -> list[dict]:
     for attempt in range(RANKED_MAX_RETRIES):
         try:
             response = requests.post(RANKED_SEARCH_URL, json=body, timeout=REQUEST_TIMEOUT)
-        except requests.exceptions.RequestException as exc:
-            raise RankedSearchUnavailable(f"request failed: {exc}") from exc
-        if response.status_code in _RETRYABLE:
-            last_reason = f"HTTP {response.status_code}"
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as exc:
+            status = exc.response.status_code if exc.response is not None else None
+            if status not in _RETRYABLE:
+                raise RankedSearchUnavailable(f"HTTP {status}") from exc
+            last_reason = f"HTTP {status}"
             if attempt + 1 < RANKED_MAX_RETRIES:
                 wait = BACKOFF_BASE**attempt
                 logger.warning(
@@ -229,8 +231,8 @@ def _fetch_ranked(query: str) -> list[dict]:
                 )
                 time.sleep(wait)
             continue
-        if response.status_code != 200:
-            raise RankedSearchUnavailable(f"HTTP {response.status_code}")
+        except requests.exceptions.RequestException as exc:
+            raise RankedSearchUnavailable(f"request failed: {exc}") from exc
         try:
             data = response.json()
         except ValueError as exc:

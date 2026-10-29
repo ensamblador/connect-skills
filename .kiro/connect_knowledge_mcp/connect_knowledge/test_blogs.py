@@ -45,14 +45,12 @@ def _ranked_item(title, url, description="", score=2.0, date="2026-01-01T00:00:0
 
 
 def _post_response(status_code=200, json_data=None):
-    resp = MagicMock()
-    resp.status_code = status_code
-    resp.json.return_value = {"results": []} if json_data is None else json_data
-    return resp
+    """Build a mock ``requests.Response`` for the ranked search."""
+    return _mock_blog_response(status_code, {"results": []} if json_data is None else json_data)
 
 
 def _mock_blog_response(status_code=200, json_data=None):
-    """Build a mock ``requests.Response`` for the directories API."""
+    """Build a mock ``requests.Response`` whose ``raise_for_status`` raises on 4xx/5xx."""
     mock_resp = MagicMock()
     mock_resp.status_code = status_code
     mock_resp.json.return_value = json_data or {}
