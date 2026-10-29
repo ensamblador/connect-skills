@@ -1,10 +1,10 @@
 ---
 inclusion: manual
-last_refreshed: 2026-09-10
-construct_count: 26
+last_refreshed: 2026-10-29
+construct_count: 27
 source_urls:
-  - https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore.html
-content_checksum: sha256:983396a263655855
+  - https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore-readme.html
+content_checksum: sha256:c214ee7e69a01377
 ---
 
 # CDK construct catalog — Bedrock AgentCore (`aws_cdk.aws_bedrockagentcore`)
@@ -36,32 +36,33 @@ terminal) with the construct name.
 
 | Construct | Description |
 | --- | --- |
-| [CfnGateway](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnGateway.html) | Provisions a Bedrock AgentCore gateway that fronts backend tools as an MCP server (the MCP_Server_Backend). |
-| [CfnGatewayTarget](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnGatewayTarget.html) | Defines a target hosted by a gateway (Lambda, OpenAPI/REST, Smithy, or MCP server) — the REST-API/OpenAPI target read from S3. |
-| [CfnRuntime](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnRuntime.html) | Provisions an AgentCore Runtime — the containerized execution environment for an agent. |
-| [CfnRuntimeEndpoint](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnRuntimeEndpoint.html) | Creates a stable endpoint that points at a specific AgentCore Runtime version. |
-| [CfnMemory](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnMemory.html) | Provisions AgentCore Memory (short-term and long-term) so agents retain context. |
-| [CfnBrowserCustom](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnBrowserCustom.html) | Provisions a custom AgentCore browser tool with your own configuration. |
-| [CfnBrowserProfile](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnBrowserProfile.html) | Defines a reusable browser profile for AgentCore browser sessions. |
-| [CfnCodeInterpreterCustom](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnCodeInterpreterCustom.html) | Provisions a custom AgentCore code-interpreter sandbox. |
-| [CfnApiKeyCredentialProvider](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnApiKeyCredentialProvider.html) | Stores an API-key outbound credential provider in the AgentCore Token Vault. |
-| [CfnOAuth2CredentialProvider](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnOAuth2CredentialProvider.html) | Stores an OAuth2 outbound credential provider in the AgentCore Token Vault. |
-| [CfnPaymentCredentialProvider](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnPaymentCredentialProvider.html) | Stores a payment credential provider in the AgentCore Token Vault. |
-| [CfnWorkloadIdentity](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnWorkloadIdentity.html) | Defines the stable workload identity of an agent in the account's identity directory. |
-| [CfnPolicy](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnPolicy.html) | Defines an AgentCore authorization policy. |
-| [CfnPolicyEngine](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnPolicyEngine.html) | Provisions a policy engine that evaluates AgentCore authorization policies. |
-| [CfnEvaluator](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnEvaluator.html) | Defines an evaluator (LLM-as-a-judge or code-based) for assessing agent performance. |
-| [CfnOnlineEvaluationConfig](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnOnlineEvaluationConfig.html) | Configures continuous online evaluation of live agent traffic. |
-| [CfnDataset](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnDataset.html) | Defines a dataset used by AgentCore evaluation. |
-| [CfnHarness](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnHarness.html) | Defines an AgentCore harness for agent testing and orchestration. |
-| [CfnConfigurationBundle](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnConfigurationBundle.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
-| [CfnPaymentConnector](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnPaymentConnector.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
-| [CfnPaymentManager](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnPaymentManager.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
-| [CfnResourcePolicy](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnResourcePolicy.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
-| [CfnCapacityProvider](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnCapacityProvider.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
-| [CfnGatewayRateLimit](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnGatewayRateLimit.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
-| [CfnGatewayRule](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnGatewayRule.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
-| [CfnHarnessEndpoint](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_bedrockagentcore/CfnHarnessEndpoint.html) | _(new construct — run `get_cdk_construct_doc` and curate a description)_ |
+| [CfnGateway](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnGateway.html?lang=python) | Provisions a Bedrock AgentCore gateway that fronts backend tools as an MCP server (the MCP_Server_Backend). |
+| [CfnGatewayTarget](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnGatewayTarget.html?lang=python) | Defines a target hosted by a gateway (Lambda, OpenAPI/REST, Smithy, or MCP server) — the REST-API/OpenAPI target read from S3. |
+| [CfnRuntime](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnRuntime.html?lang=python) | Provisions an AgentCore Runtime — the containerized execution environment for an agent. |
+| [CfnRuntimeEndpoint](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnRuntimeEndpoint.html?lang=python) | Creates a stable endpoint that points at a specific AgentCore Runtime version. |
+| [CfnMemory](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnMemory.html?lang=python) | Provisions AgentCore Memory (short-term and long-term) so agents retain context. |
+| [CfnBrowserCustom](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnBrowserCustom.html?lang=python) | Provisions a custom AgentCore browser tool with your own configuration. |
+| [CfnBrowserProfile](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnBrowserProfile.html?lang=python) | Defines a reusable browser profile for AgentCore browser sessions. |
+| [CfnCodeInterpreterCustom](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnCodeInterpreterCustom.html?lang=python) | Provisions a custom AgentCore code-interpreter sandbox. |
+| [CfnApiKeyCredentialProvider](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnApiKeyCredentialProvider.html?lang=python) | Stores an API-key outbound credential provider in the AgentCore Token Vault. |
+| [CfnOAuth2CredentialProvider](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnOAuth2CredentialProvider.html?lang=python) | Stores an OAuth2 outbound credential provider in the AgentCore Token Vault. |
+| [CfnPaymentCredentialProvider](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnPaymentCredentialProvider.html?lang=python) | Stores a payment credential provider in the AgentCore Token Vault. |
+| [CfnWorkloadIdentity](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnWorkloadIdentity.html?lang=python) | Defines the stable workload identity of an agent in the account's identity directory. |
+| [CfnPolicy](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnPolicy.html?lang=python) | Defines an AgentCore authorization policy. |
+| [CfnPolicyEngine](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnPolicyEngine.html?lang=python) | Provisions a policy engine that evaluates AgentCore authorization policies. |
+| [CfnEvaluator](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnEvaluator.html?lang=python) | Defines an evaluator (LLM-as-a-judge or code-based) for assessing agent performance. |
+| [CfnOnlineEvaluationConfig](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnOnlineEvaluationConfig.html?lang=python) | Configures continuous online evaluation of live agent traffic. |
+| [CfnDataset](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnDataset.html?lang=python) | Defines a dataset used by AgentCore evaluation. |
+| [CfnHarness](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnHarness.html?lang=python) | Defines an AgentCore harness for agent testing and orchestration. |
+| [CfnConfigurationBundle](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnConfigurationBundle.html?lang=python) | Packages versioned component configurations for AgentCore agents, with branch and commit-message version tracking and optional KMS encryption. |
+| [CfnPaymentConnector](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnPaymentConnector.html?lang=python) | Connects an AgentCore payment manager to a supported payment provider, with the credential providers used to authenticate to it. |
+| [CfnPaymentManager](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnPaymentManager.html?lang=python) | Configures the inbound authorizer, `CUSTOM_JWT` or `AWS_IAM`, and the IAM role that govern payment operations by AgentCore agents. Payment connectors attach to it. |
+| [CfnResourcePolicy](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnResourcePolicy.html?lang=python) | Attaches a resource-based policy that grants cross-account or service access to an AgentCore resource. Supported for Runtime and Gateway only. |
+| [CfnCapacityProvider](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnCapacityProvider.html?lang=python) | Defines customer-managed EC2 compute in your account that AgentCore Runtime uses for its Instances compute type. |
+| [CfnGatewayRateLimit](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnGatewayRateLimit.html?lang=python) | Sets a rate limit on an AgentCore gateway. Ordered dimension keys scope it, for example per user or per target, and entries map dimension values to rates. |
+| [CfnGatewayRule](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnGatewayRule.html?lang=python) | Adds a prioritized rule to an AgentCore gateway. Its conditions and actions control how requests are routed and processed, for example principal-based access control or path-based routing. |
+| [CfnHarnessEndpoint](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnHarnessEndpoint.html?lang=python) | Creates a named, stable endpoint for one version of an AgentCore harness, the managed agent loop. The version behind it can change without changing how callers invoke it. |
+| [CfnConsentPortal](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_bedrockagentcore.CfnConsentPortal.html?lang=python) | Creates an AWS-hosted consent portal for one AgentCore gateway. It signs end users in through an OIDC identity provider and records their consent before an agent acts on their behalf. |
 
 ## Hard-won deploy learnings (CfnGateway / CfnGatewayTarget)
 

@@ -58,17 +58,27 @@ def docs_main(argv: list[str] | None = None) -> int:
     """
     parser = argparse.ArgumentParser(
         prog="cdk-docs-search",
-        description="Search the AWS CDK (Python) reference documentation.",
+        description="Search the AWS CDK v2 reference documentation.",
     )
     parser.add_argument("query", help="Free-text search query")
     parser.add_argument(
         "--limit", type=int, default=10, help="Max hits to return (default 10)"
     )
+    parser.add_argument(
+        "--module",
+        default=None,
+        help="Module filter, e.g. aws-connect or aws_cdk.aws_connect",
+    )
+    parser.add_argument(
+        "--kind",
+        default=None,
+        help="Page-kind filter: construct, struct, interface, enum, class",
+    )
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args(argv)
 
     _setup_logging(args.verbose)
-    print(cdk_search(args.query, limit=args.limit))
+    print(cdk_search(args.query, limit=args.limit, module=args.module, kind=args.kind))
     return 0
 
 

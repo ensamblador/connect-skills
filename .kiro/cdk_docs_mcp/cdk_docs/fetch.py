@@ -36,17 +36,17 @@ REQUEST_TIMEOUT = 30
 # Transient HTTP status codes worth retrying — mirrors connect_knowledge/docs.py.
 _RETRYABLE_STATUS = (400, 429, 500, 502, 503)
 
-# Root of the AWS CDK (v2, Python) API reference.
-_CDK_REF_ROOT = "https://docs.aws.amazon.com/cdk/api/v2/python"
+# Root of the AWS CDK v2 API reference, one site for all languages. The
+# Sphinx Python site at ``cdk/api/v2/python`` now answers 301 to here.
+_CDK_REF_ROOT = "https://docs.aws.amazon.com/cdk/api/v2/docs"
 
 # The closed set of in-scope construct libraries (Req 1.4) mapped to their
-# CDK (v2, Python) reference URLs. Note ``aws_connect``'s reference lives
-# under ``/README.html`` while the other three are flat ``.html`` pages.
+# CDK v2 module overview pages, ``aws-cdk-lib.<module>-readme.html``.
 LIBRARIES: dict[str, str] = {
-    "aws_cdk.aws_connect": f"{_CDK_REF_ROOT}/aws_cdk.aws_connect/README.html",
-    "aws_cdk.aws_lex": f"{_CDK_REF_ROOT}/aws_cdk.aws_lex.html",
-    "aws_cdk.aws_wisdom": f"{_CDK_REF_ROOT}/aws_cdk.aws_wisdom.html",
-    "aws_cdk.aws_bedrockagentcore": f"{_CDK_REF_ROOT}/aws_cdk.aws_bedrockagentcore.html",
+    "aws_cdk.aws_connect": f"{_CDK_REF_ROOT}/aws-cdk-lib.aws_connect-readme.html",
+    "aws_cdk.aws_lex": f"{_CDK_REF_ROOT}/aws-cdk-lib.aws_lex-readme.html",
+    "aws_cdk.aws_wisdom": f"{_CDK_REF_ROOT}/aws-cdk-lib.aws_wisdom-readme.html",
+    "aws_cdk.aws_bedrockagentcore": f"{_CDK_REF_ROOT}/aws-cdk-lib.aws_bedrockagentcore-readme.html",
 }
 
 

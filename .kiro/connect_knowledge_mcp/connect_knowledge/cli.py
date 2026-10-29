@@ -57,7 +57,8 @@ def blogs_main(argv: list[str] | None = None) -> int:
         action="append",
         dest="blogs",
         help=(
-            "Restrict to a specific blog name. Repeat for multiple. "
+            "Restrict to a blog URL slug (e.g. machine-learning) or a known "
+            "display name. Repeat for multiple. "
             f"Default set: {', '.join(DEFAULT_BLOGS)}"
         ),
     )

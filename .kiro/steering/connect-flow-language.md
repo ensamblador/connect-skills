@@ -1,6 +1,6 @@
 ---
 inclusion: manual
-last_refreshed: 2026-09-22
+last_refreshed: 2026-10-29
 action_count: 56
 source_urls:
   - https://docs.aws.amazon.com/connect/latest/devguide/flow-language-actions.html

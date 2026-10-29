@@ -1,6 +1,7 @@
 # cdk-docs-mcp
 
-MCP server exposing the AWS CDK for Python reference over stdio. Two
+MCP server exposing the Python side of the AWS CDK v2 reference over
+stdio. Two
 tools: free-text search across the reference, and a per-construct
 property dump. Any MCP client can call them.
 
@@ -17,10 +18,10 @@ Four in-scope libraries cover Connect IaC work:
 
 | Library | Covers | Paired catalog |
 |---|---|---|
-| `aws_cdk.aws_connect` | Amazon Connect L1 `Cfn*` constructs | `#cdk-connect`, 37 constructs |
+| `aws_cdk.aws_connect` | Amazon Connect L1 `Cfn*` constructs | `#cdk-connect`, 39 constructs |
 | `aws_cdk.aws_lex` | Amazon Lex constructs | `#cdk-lex`, 4 constructs |
-| `aws_cdk.aws_wisdom` | Amazon Q in Connect (Wisdom) constructs | `#cdk-q-in-connect`, 12 constructs |
-| `aws_cdk.aws_bedrockagentcore` | Bedrock AgentCore gateway constructs | `#cdk-agentcore`, 26 constructs |
+| `aws_cdk.aws_wisdom` | Amazon Q in Connect (Wisdom) constructs | `#cdk-q-in-connect`, 14 constructs |
+| `aws_cdk.aws_bedrockagentcore` | Bedrock AgentCore gateway constructs | `#cdk-agentcore`, 27 constructs |
 
 The catalogs in [`.kiro/steering`](../steering) hold the construct lists
 with one-line descriptions. Use them to find the right construct name,
@@ -33,35 +34,68 @@ pages this server reads.
 ### search_cdk_docs
 
 ```python
-search_cdk_docs(query: str, limit: int = 10) -> str
+search_cdk_docs(query: str, limit: int = 10,
+                module: str | None = None, kind: str | None = None) -> str
 ```
 
-Searches the CDK for Python reference at
-`docs.aws.amazon.com/cdk/api/v2/python`. Use it to find the right
-construct or property when authoring CDK Python infrastructure.
+Searches the CDK v2 reference through the site's own search index, the
+one behind the search box on `docs.aws.amazon.com/cdk/api/v2/docs`. It
+ranks on page content, so a description finds pages without a construct
+name: "agentcore gateway target" returns the AgentCore `GatewayTarget*`
+pages. Only stable `aws-cdk-lib` pages are kept. CDK v1, the
+`@aws-cdk/*` alpha packages and the mixin pages are dropped.
 
 In:
 - `query`, free-text search string.
 - `limit`, maximum hits, default 10.
+- `module`, optional. Restricts to one CDK module. `aws-connect`,
+  `aws_connect` and `aws_cdk.aws_connect` are equivalent.
+- `kind`, optional. Restricts to one page kind: `construct`, `struct`,
+  `interface`, `enum` or `class`. Property-type pages (`struct`) often
+  outrank the construct itself, so pass `construct` when you want
+  constructs only.
+
+An unknown `module` or `kind` returns an error naming the closest valid
+values, for example `aws-conect` suggests `aws-connect`.
 
 Out: hits separated by `---`, each shaped as
 
 ```
-Title: <construct or props page title>
-URL: <full https URL>
-Snippet: <excerpt>
+Title: CfnContactFlow (L1 construct)
+URL: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_connect.CfnContactFlow.html?lang=python
+Snippet: Specifies a flow for an Connect Customer instance.
 ```
 
-Search matches construct names across every CDK module, not only the
-four in-scope libraries. A query for `CfnInstance` returns
-`aws_connect.CfnInstance` alongside `aws_opsworks.CfnInstance` and
-`aws_sso.CfnInstance`. Naming the service in the query improves ranking
-but does not filter, so check the module segment in the URL when a
-construct name is common.
+The title carries the page kind in brackets. The snippet is the page's
+own text around the match. URLs carry `?lang=python`, so a browser opens
+the Python tab rather than TypeScript.
 
-Snippets are thin on some pages. Props pages in particular often return
-a copyright line or a boilerplate import block. That reflects the source
-page, not a parse failure. Follow up with `get_cdk_construct_doc`.
+#### How it runs
+
+The site searches a [Pagefind](https://pagefind.app) index in the
+browser, and Pagefind has no HTTP search API or Python client. Its search
+core is a WASM module the site serves as `wasm.en-us.pagefind`.
+`cdk_docs/pagefind.py` loads that module with
+[`wasmtime`](https://pypi.org/project/wasmtime/) and makes the same calls
+the site's `pagefind.js` makes, so results match the site's search box.
+
+The engine stays loaded in the server process. The first query after
+start-up downloads about 500 KB and takes about a second; later queries
+fetch only index chunks and result pages not seen before, typically 0.1
+to 0.4 seconds. A new index build on the site, which changes the hash in
+`pagefind-entry.json`, reloads the engine automatically.
+
+The WASM module cannot do I/O on its own. Python does every fetch, always
+under `docs.aws.amazon.com/cdk/api/pagefind/`, and checks every hash the
+index returns before putting it into a URL. The code supports Pagefind
+1.5.x; an index built by another version falls back rather than risking
+wrong results.
+
+If the Pagefind path fails, for example on a network error or a Pagefind
+version change, the tool still answers from the AWS docs search index.
+The reply then starts with a `Note:` line naming the reason. That index
+matches construct names best, ignores `kind`, applies `module` to the
+URL, and returns the same site blurb as every snippet.
 
 ### get_cdk_construct_doc
 
@@ -87,18 +121,26 @@ a list of `{name, type?, required?, description?}`, `description`, and
 `raw_sections` as an escape hatch holding `Description`, `Parameters`,
 `Attributes`, and `Methods` as raw text.
 
-Out on failure: a descriptive string naming the requested identifier and
-the reason per library tried. The docs CDN answers non-existent pages
-with `HTTP 403` rather than 404, so a 403 here means no such construct,
-not an auth or rate-limit problem.
+The source page is `aws-cdk-lib.<module>.<Construct>.html?lang=python`.
+It renders every language, and the parser reads only the Python variant,
+so names are snake_case and types are Python annotations such as
+`typing.Union[IResolvable, AttributesProperty]`. The page's markdown twin
+holds TypeScript only, which is why the tool parses HTML.
 
-Two notes on the output. `properties` is the field to rely on; it is
-parsed and typed. `raw_sections["Attributes"]` can be very large for
-complex constructs, since it flattens every nested property type in the
-service model, so reach for it only when you need nested detail such as
-the inner fields of `AuthorizerConfigurationProperty`. Unicode in
-`raw_sections` arrives mojibaked, with em dashes and curly quotes
-rendering as `â`, so treat that text as approximate when quoting.
+Out on failure: a descriptive string naming the requested identifier and
+the reason per library tried. `HTTP 404` means no such construct in that
+library. `HTTP 403` comes from CloudFront throttling a burst of requests,
+not from a missing page, so wait a minute and retry.
+
+A page without a construct heading and an Initializer section returns
+`failed to parse ... no construct heading and Initializer section`
+rather than an empty property list. That covers a future AWS layout
+change, and it covers nested property types. On the current site a
+nested type such as `CfnGateway.AuthorizerConfigurationProperty` has its
+own struct page with no Initializer, so this tool rejects it, and the
+parent page's `raw_sections["Attributes"]` lists only the parent's own
+attributes. Read nested fields from the struct page linked in the
+property's `type`.
 
 ## Install
 
@@ -131,7 +173,7 @@ uv run mcp dev cdk_docs_mcp.py
 Two console scripts cover terminal use without an MCP client:
 
 ```bash
-uv run cdk-docs-search "CfnInstance Amazon Connect"
+uv run cdk-docs-search "contact flow" --module aws-connect --kind construct
 uv run cdk-construct-doc CfnInstance --library aws_cdk.aws_connect
 ```
 
@@ -141,11 +183,14 @@ uv run cdk-construct-doc CfnInstance --library aws_cdk.aws_connect
 uv run --with pytest --with hypothesis pytest cdk_docs/ -q
 ```
 
-32 tests. `hypothesis` is needed because `test_parse_fidelity.py` and
+74 tests. `hypothesis` is needed because `test_parse_fidelity.py` and
 `test_mcp_cli_parity.py` are property-based; without it those two error
 on collection.
 
-`test_live_fetch.py` hits the network. The rest parse fixtures.
+`test_live_fetch.py` hits the network, including one real WASM search
+per library, and skips when offline. The rest use fixtures and mocks.
+`test_pagefind.py` pins the ports of the `pagefind.js` query and excerpt
+logic, the hash checks, engine reuse, and the failure paths.
 `test_mcp_cli_parity.py` asserts the MCP tools and the console scripts
 return the same data, so add new behavior in `cdk_docs/` rather than in
 the server file.
@@ -185,15 +230,25 @@ Claude Desktop uses the same block in
 
 ## Failure modes
 
-- `HTTP 403` from `get_cdk_construct_doc`. The construct does not exist
+- `HTTP 404` from `get_cdk_construct_doc`. The construct does not exist
   in that library. Check spelling, or run `search_cdk_docs` first to
   find the correct module.
+- `HTTP 403` from `get_cdk_construct_doc`. CloudFront throttled the
+  request. Wait a minute and retry.
+- `failed to parse ... no construct heading and Initializer section`.
+  The identifier names a nested struct page, or AWS changed the page
+  layout again. Check the page in a browser before changing the parser.
 - `spawn uv ENOENT` in the client log. The `command` path does not
   resolve. Use the absolute path to `uv`, for example
   `/Users/<you>/.local/bin/uv`, and confirm `--directory` points at this
   folder.
-- Thin or boilerplate snippets from `search_cdk_docs`. Expected on props
-  and mixin pages. Follow up with `get_cdk_construct_doc`.
+- A `search_cdk_docs` reply that starts with `Note: CDK site search
+  unavailable (...)`. The Pagefind path could not run and the reply came
+  from the docs index fallback. `GET ... failed` is a network error or a
+  moved search index. `the site's Pagefind is version X` means AWS
+  upgraded Pagefind past 1.5.x and `cdk_docs/pagefind.py` needs updating.
+  `the wasmtime package is not installed` means the server's environment
+  is out of date; run `uv sync` in this folder.
 
 ## Layout
 
@@ -206,10 +261,11 @@ Claude Desktop uses the same block in
 ├── cdk_docs/            # fetch, parse, search, cli package
 │   ├── __init__.py
 │   ├── fetch.py
-│   ├── search.py        # backs search_cdk_docs
+│   ├── search.py        # backs search_cdk_docs: Pagefind, then docs-index fallback
+│   ├── pagefind.py      # the site's Pagefind WASM in wasmtime, kept loaded
 │   ├── construct_doc.py # backs get_cdk_construct_doc
 │   ├── cli.py           # console-script entry points
-│   └── test_*.py        # 5 test modules
+│   └── test_*.py        # 7 test modules
 └── cdk_docs_mcp.py      # FastMCP server, two @mcp.tool() functions
 ```
 

@@ -142,13 +142,13 @@ Run all four before finishing any task that touches Python. Expected
 counts as of the last run:
 
 ```bash
-# cdk_docs server, 41 tests (test_live_fetch.py hits the network, self-skips offline)
+# cdk_docs server, 74 tests (test_live_fetch.py hits the network, self-skips offline)
 uv run --project .kiro/cdk_docs_mcp --with pytest --with hypothesis pytest .kiro/cdk_docs_mcp/cdk_docs/ -q
 
-# connect_knowledge server, 26 tests, offline
+# connect_knowledge server, 53 tests, offline
 uv run --project .kiro/connect_knowledge_mcp --with pytest python -m pytest .kiro/connect_knowledge_mcp/connect_knowledge/ -q
 
-# refresh-script properties, 12 tests, offline
+# refresh-script properties, 15 tests, offline
 uv run --project .kiro/connect_knowledge_mcp --with pytest --with hypothesis pytest .kiro/scripts/ -q
 
 # no-secrets scanner, 16 tests
@@ -202,7 +202,7 @@ uv run --with boto3 python .kiro/scripts/refresh_system_prompts.py --dry-run --r
 ├── connect_knowledge_mcp/   # MCP server, 8 Connect doc + validation tools
 │   └── connect_knowledge/   # package: docs, blogs, repost, page_doc, validators
 ├── cdk_docs_mcp/            # MCP server, 2 CDK reference tools
-│   └── cdk_docs/            # package: fetch, search, construct_doc
+│   └── cdk_docs/            # package: fetch, search, pagefind (Pagefind WASM), construct_doc
 ├── scripts/                 # 7 refresh scripts + 2 shared helpers + 3 test modules
 ├── skills/                  # 10 SKILL.md workflows, some with scripts/ and reference/
 ├── steering/                # 13 catalogs: 9 generated, 4 hand-authored
@@ -219,7 +219,14 @@ CLAUDE.md                       # imports AGENTS.md, maps #name to steering
 Stack: Python 3.11 pinned via `.python-version` in both servers, `uv` for
 every invocation, FastMCP through `mcp[cli]>=1.14`, `requests`,
 `beautifulsoup4`, `playwright>=1.46`, and `boto3` as an optional extra
-used only by deploy scripts and `refresh_system_prompts.py`.
+used only by deploy scripts and `refresh_system_prompts.py`. `cdk_docs`
+also depends on `wasmtime`: `cdk_docs/pagefind.py` runs the CDK site's
+own Pagefind search WASM in-process and replays the calls `pagefind.js`
+makes. The wasm-bindgen glue there is tied to Pagefind 1.5.x; when the
+site upgrades, the version check makes `search_cdk_docs` fall back to the
+docs index with a `Note:` line, and `test_live_fetch.py` fails, which is
+the signal to port the glue. Keep the WASM free of imports beyond the one
+it declares, and keep every fetch under `docs.aws.amazon.com/cdk/api/pagefind/`.
 
 No linter or formatter is configured. No `[tool.pytest.ini_options]`
 either; pytest is invoked with explicit paths.
@@ -268,9 +275,20 @@ relative links absolutised, plus a `sections` list and an optional
 version did, and AWS's rename of `Supported channels` to `Contact types`
 silently emptied three keys on 10 of 58 block pages.
 
-`get_cdk_construct_doc` and `get_view_component_doc` do parse, correctly:
-their sources are Sphinx HTML and a JavaScript-rendered Storybook page,
-so there is no markdown to forward.
+`get_cdk_construct_doc` and `get_view_component_doc` do parse, correctly.
+The CDK v2 reference pages do link a `.md` twin, but it holds only the
+TypeScript variant, so the Python names and types exist only in the
+HTML. The view source is a JavaScript-rendered Storybook page with no
+markdown at all.
+
+The CDK parser shows why misses must be reported. AWS moved the
+reference from Sphinx at `cdk/api/v2/python` to VitePress at
+`cdk/api/v2/docs` behind a 301. The old parser returned zero properties
+and the theme's "Appearance" label as the description, a reply that
+read like a real one. It now raises `LayoutNotRecognized` instead.
+`refresh_cdk_docs.py` follows the same rule: a module page with no
+construct links leaves its catalog untouched and exits 1, where the old
+script would have emptied all four catalogs and exited 0.
 
 Apply the same rule to new tools. Forward the source when one exists.
 When you must parse, report a miss rather than returning an empty value

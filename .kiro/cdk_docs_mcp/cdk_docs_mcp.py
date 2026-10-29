@@ -6,7 +6,8 @@ libraries (``aws_cdk.aws_connect``, ``aws_cdk.aws_lex``,
 ``aws_cdk.aws_wisdom``, ``aws_cdk.aws_bedrockagentcore``):
 
     Search:
-    - search_cdk_docs        → CDK for Python reference (Title/URL/Snippet)
+    - search_cdk_docs        → CDK v2 reference via the site's Pagefind
+                               index, docs-index fallback (Title/URL/Snippet)
 
     Per-construct deep-dive:
     - get_cdk_construct_doc  → parsed construct page (properties + source URL)
@@ -30,13 +31,20 @@ mcp = FastMCP("cdk_docs")
 
 
 @mcp.tool()
-def search_cdk_docs(query: str, limit: int = 10) -> str:
-    """Search the AWS CDK (Python) API reference.
+def search_cdk_docs(
+    query: str,
+    limit: int = 10,
+    module: str | None = None,
+    kind: str | None = None,
+) -> str:
+    """Search the AWS CDK v2 API reference.
 
     Best for finding the right construct or property when authoring CDK
-    Python infrastructure for Connect work. Scoped to the CDK for Python
-    reference (``docs.aws.amazon.com/cdk/api/v2/python``), which covers
-    the four in-scope construct libraries: ``aws_cdk.aws_connect``,
+    Python infrastructure for Connect work. Uses the CDK site's own
+    search index, which matches descriptions as well as names, so
+    "agentcore gateway target" or "contact flow" work without knowing the
+    construct name. Scoped to stable ``aws-cdk-lib`` pages, which cover the
+    four in-scope construct libraries: ``aws_cdk.aws_connect``,
     ``aws_cdk.aws_lex``, ``aws_cdk.aws_wisdom``, and
     ``aws_cdk.aws_bedrockagentcore``. Pair with ``get_cdk_construct_doc``
     when you need the full property list for a specific construct.
@@ -44,13 +52,23 @@ def search_cdk_docs(query: str, limit: int = 10) -> str:
     Args:
         query: Free-text search query.
         limit: Maximum number of hits to return (default 10).
+        module: Optional module filter, e.g. ``aws-connect``,
+            ``aws_connect`` or ``aws_cdk.aws_connect``. An unknown value
+            returns an error listing the closest valid ones.
+        kind: Optional page-kind filter. ``construct`` returns L1/L2
+            constructs only; others are ``struct``, ``interface``,
+            ``enum`` and ``class``. Property-type (``struct``) pages
+            otherwise tend to outrank the construct itself.
 
     Returns:
         Multi-hit formatted block (``Title / URL / Snippet`` separated by
         ``---``), or an error / no-results string. URLs are full https
-        links suitable for inline citation.
+        links that open the Python tab. If the site search cannot run,
+        the server falls back to the AWS docs search index, and the
+        reply starts with a ``Note:`` line saying so; that index matches
+        construct names best and ignores ``kind``.
     """
-    return _cdk_search(query, limit=limit)
+    return _cdk_search(query, limit=limit, module=module, kind=kind)
 
 
 @mcp.tool()

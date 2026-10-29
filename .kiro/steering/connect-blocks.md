@@ -1,6 +1,6 @@
 ---
 inclusion: manual
-last_refreshed: 2026-09-10
+last_refreshed: 2026-10-29
 block_count: 58
 source_urls:
   - https://docs.aws.amazon.com/connect/latest/adminguide/contact-block-definitions.html

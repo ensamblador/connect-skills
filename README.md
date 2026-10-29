@@ -49,7 +49,7 @@ root. Report what you verified and what you could not.
    Kiro feature panel. If a server keeps failing on a path that is not
    in the config, tell me to reload the window.
 
-6. Verify. Three suites should pass, 12 tests, then 41, then 26:
+6. Verify. Three suites should pass, 15 tests, then 74, then 53:
    uv run --project .kiro/connect_knowledge_mcp --with pytest --with hypothesis pytest .kiro/scripts/ -q
    uv run --project .kiro/cdk_docs_mcp --with pytest --with hypothesis pytest .kiro/cdk_docs_mcp/cdk_docs/ -q
    uv run --project .kiro/connect_knowledge_mcp --with pytest python -m pytest .kiro/connect_knowledge_mcp/connect_knowledge/ -q
@@ -58,7 +58,9 @@ root. Report what you verified and what you could not.
    - get_block_doc with slug invoke-lambda-function-block
    - get_view_component_doc with slug ui-component-datepicker--with-all,
      which proves Chromium works
-   - search_cdk_docs for CfnContactFlow
+   - search_cdk_docs for "contact flow" with module aws-connect and
+     kind construct, which proves the site search runs; a reply
+     starting with "Note:" means it fell back
    - validate_flow_json on flow JSON you deliberately broke, so I can
      see it catch the errors
 
@@ -147,7 +149,7 @@ Two tools over the AWS CDK for Python reference, scoped to
 
 | Tool | Purpose |
 |---|---|
-| `search_cdk_docs` | Find the right construct or property |
+| `search_cdk_docs` | Find the right construct or property, by name or description |
 | `get_cdk_construct_doc` | Full property list for one construct |
 
 ## Skills
@@ -182,9 +184,9 @@ Generated catalogs, rewritten by [`.kiro/scripts`](.kiro/scripts/README.md):
 | `#connect-blocks` | Every flow block, with the Voice, Chat, Task, Email matrix | 58 |
 | `#connect-flow-language` | Flow language grammar, the Action catalog, and the server-side deploy gaps | 56 |
 | `#connect-views` | View Dictionary components, view templates, admin-guide pages | 66 |
-| `#cdk-connect` | `aws_cdk.aws_connect` constructs | 37 |
-| `#cdk-agentcore` | `aws_cdk.aws_bedrockagentcore` constructs | 26 |
-| `#cdk-q-in-connect` | `aws_cdk.aws_wisdom` constructs | 12 |
+| `#cdk-connect` | `aws_cdk.aws_connect` constructs | 39 |
+| `#cdk-agentcore` | `aws_cdk.aws_bedrockagentcore` constructs | 27 |
+| `#cdk-q-in-connect` | `aws_cdk.aws_wisdom` constructs | 14 |
 | `#cdk-lex` | `aws_cdk.aws_lex` constructs | 4 |
 | `#aws-workshops` | AWS-published Connect workshops with deep-linked modules | 14 |
 | `#connect-ai-agents` | AI agent design, configuration, troubleshooting. Prose, with tracked sources | 20 sources |
@@ -544,13 +546,13 @@ every description. Details in
 ## Tests
 
 ```bash
-# refresh-script properties, 12 tests, no network
+# refresh-script properties, 15 tests, no network
 uv run --project .kiro/connect_knowledge_mcp --with pytest --with hypothesis pytest .kiro/scripts/ -q
 
-# cdk_docs server, 41 tests
+# cdk_docs server, 74 tests
 uv run --project .kiro/cdk_docs_mcp --with pytest --with hypothesis pytest .kiro/cdk_docs_mcp/cdk_docs/ -q
 
-# connect_knowledge server, 26 tests, no network
+# connect_knowledge server, 53 tests, no network
 uv run --project .kiro/connect_knowledge_mcp --with pytest python -m pytest .kiro/connect_knowledge_mcp/connect_knowledge/ -q
 
 # no-secrets scanner, 16 tests

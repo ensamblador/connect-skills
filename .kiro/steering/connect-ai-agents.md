@@ -1,6 +1,6 @@
 ---
 inclusion: manual
-last_refreshed: 2026-09-22
+last_refreshed: 2026-10-29
 source_urls:
   - https://docs.aws.amazon.com/connect/latest/adminguide/connect-ai-agent.html
   - https://docs.aws.amazon.com/connect/latest/adminguide/ai-agent-initial-setup.html
@@ -24,7 +24,7 @@ source_urls:
   - https://docs.aws.amazon.com/connect/latest/adminguide/ts-ai-agents-self-service.html
 source_checksums:
   https://docs.aws.amazon.com/connect/latest/adminguide/connect-ai-agent.html: sha256:0ec7ff94d9e5167c
-  https://docs.aws.amazon.com/connect/latest/adminguide/ai-agent-initial-setup.html: sha256:00c0d75cf814b048
+  https://docs.aws.amazon.com/connect/latest/adminguide/ai-agent-initial-setup.html: sha256:f383efcbfd88b13b
   https://docs.aws.amazon.com/connect/latest/adminguide/customize-connect-ai-agents.html: sha256:87a18149a3de7288
   https://docs.aws.amazon.com/connect/latest/adminguide/default-ai-system.html: sha256:6d7bd982bf3f4541
   https://docs.aws.amazon.com/connect/latest/adminguide/create-ai-agents.html: sha256:377309a8616ef453
@@ -38,7 +38,7 @@ source_checksums:
   https://docs.aws.amazon.com/connect/latest/adminguide/ai-agent-security-profile-permissions.html: sha256:2eb84a4f3af64d3c
   https://docs.aws.amazon.com/connect/latest/adminguide/integrate-guides-with-ai-agents.html: sha256:07ff5438151fb6e4
   https://docs.aws.amazon.com/connect/latest/adminguide/multiple-knowledge-base-setup-and-content-segmentation.html: sha256:08a32979f94e98c3
-  https://docs.aws.amazon.com/connect/latest/adminguide/access-connect-assistant-in-workspace.html: sha256:87ec7db461062fdd
+  https://docs.aws.amazon.com/connect/latest/adminguide/access-connect-assistant-in-workspace.html: sha256:512b63d0a4896f64
   https://docs.aws.amazon.com/connect/latest/adminguide/use-generative-ai-case-summarization.html: sha256:757a19f7b3de562c
   https://docs.aws.amazon.com/connect/latest/adminguide/ai-generated-note-taking.html: sha256:14a05554bafd4b93
   https://docs.aws.amazon.com/connect/latest/adminguide/monitor-ai-agents.html: sha256:80537c8e0268d027
@@ -170,28 +170,44 @@ Order matters — agents can't bind to a knowledge base that doesn't
 exist yet.
 
 1. **Create the domain.** Connect Customer console → instance →
-   **AI Agents** → **Add domain**. One domain per Connect instance.
+   **AI Agents** → **Add domain**. One domain per Connect instance. A
+   domain can serve several instances, and domains never share
+   integrations or customer data.
 2. **Encrypt the domain.** Default AWS-owned key, an existing CMK, or
    a new symmetric KMS key. **Chat / task / email require** the
    `connect.amazonaws.com` service principal to have
    `kms:Decrypt`, `kms:GenerateDataKey*`, and `kms:DescribeKey` on the
-   key. Forgetting this is the most common chat-broken symptom.
+   key. Forgetting this is the most common chat-broken symptom. A key
+   administered by someone else must also grant `kms:CreateGrant`,
+   `kms:DescribeKey`, `kms:Decrypt` and `kms:GenerateDataKey*` to the
+   IAM identity that invokes agent assist.
 3. **Add an integration (knowledge base).** S3, Salesforce, ServiceNow
    (versioning required), ZenDesk, SharePoint Online (AUTHORIZATION_CODE
-   only), Web Crawler (respects robots.txt; 1-hour default timeout;
-   1-300 URLs/host/min). Sync frequency defaults to 1 hour. Quotas at
-   `connect-ai-agents-quotas`.
+   only), Web Crawler (respects robots.txt, and blocks a site that has
+   none; 1-hour default timeout; 1-300 URLs/host/min), or an existing
+   Bedrock knowledge base (Orchestration agents only). Sync frequency
+   defaults to 1 hour. Quotas at `connect-ai-agents-quotas`.
+   Files: HTML, DOCX, PDF or UTF-8 text, up to 1 MB each. DOCX is
+   converted to simplified HTML and loses its formatting. PDFs cannot
+   be encrypted or password-protected. `GetKnowledgeBase` returns
+   `lastContentModificationTime`, the last time the content changed.
 4. **Wire the flow.** Add a **Connect assistant** block early in the
    inbound flow, before the contact reaches the agent. The block
    creates the AI session and pins the domain. Without it, neither
-   self-service nor assistance can run for that contact.
+   self-service nor assistance can run for that contact. On voice, also
+   add a **Set recording and analytics behavior** block with real-time
+   conversational analytics, anywhere in the flow. A customized setup
+   replaces the Connect assistant block with a Lambda in an **AWS
+   Lambda function** block.
 5. **Assign permissions.** See [Security profiles](#security-profiles)
    below.
 
 **Cross-region inference:** Connect AI agents uses Bedrock
 cross-region inference profiles (e.g., `us.anthropic.claude-...`) so
-calls fan out across the region's geo. No customer-facing toggle —
-just be aware when reading model_id in logs.
+calls fan out across the region's geo, and `model_id` in logs shows the
+profile. There is no console toggle. To keep processing in the
+selected Region, contact AWS Support. Existing custom prompts stay on
+in-region inference until they move to a newer model.
 
 
 ## Customizing an agent
@@ -495,10 +511,11 @@ input`. Instead:
    routing the contact to a queue.
 3. Grant **Connect assistant - Access** in **Agent Applications** to
    every agent's security profile so they can see the panel.
-4. Direct CCP users to
-   `https://<instance>.my.connect.aws/agent-app-v2/` (or the
-   `awsapps.com` equivalent) so the assistant panel renders next to
-   the CCP.
+4. Direct CCP users to `https://<instance>.my.connect.aws/agent/`
+   (or `https://<instance>.awsapps.com/connect/agent/`) so the
+   assistant panel renders next to the CCP. When the CCP is embedded
+   in your own application, initialize the Connect assistant through
+   Amazon Connect Streams instead.
 
 **Step-by-step guide integration** (deepens recommendations):
 1. `aws qconnect list-knowledge-bases` → get `knowledgeBaseId`.
@@ -823,7 +840,7 @@ When something looks off, walk this list before going deep:
    intersection during agent-assistance flows.
 10. **No recommendations in the assistant panel.** The user is on the
     legacy CCP URL. Send them to
-    `https://<instance>.my.connect.aws/agent-app-v2/` and grant
+    `https://<instance>.my.connect.aws/agent/` and grant
     `Connect assistant - View Access`.
 
 For deeper digging, the admin guide topic

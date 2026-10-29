@@ -309,7 +309,8 @@ Agent-assistance:
 - Default mapping picks up the agent automatically once it is set
   as the default for its use case.
 - Agents need `Connect assistant - View Access` in their security
-  profile and the `agent-app-v2/` workspace URL.
+  profile and the `/agent/` workspace URL
+  (`https://<instance>.my.connect.aws/agent/`).
 - Step-by-step guides associated via `qconnect
   create-content-association` (if guides are part of the design).
 ```

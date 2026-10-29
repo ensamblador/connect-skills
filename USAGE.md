@@ -88,6 +88,15 @@ Why do Connect Lambda invocations fail at 8 seconds? Check re:Post.
 Expect several community threads on the 8-second synchronous cap.
 
 ```
+Which CDK construct defines an AgentCore gateway target? Search the CDK
+docs, constructs only.
+```
+Expect `CfnGatewayTarget` from `search_cdk_docs` with `kind` set to
+`construct`, though you never named it. Proves the site search runs. A
+reply starting with `Note:` means the site search failed and the
+fallback answered.
+
+```
 What are the required properties on CfnAIAgent?
 ```
 Expect `assistant_id`, `configuration`, `type` as required, with
@@ -131,9 +140,9 @@ Scripts rewrite these from live AWS sources.
 | `#connect-blocks` | Every flow block with its channel matrix | 58 |
 | `#connect-flow-language` | Grammar, Action catalog, deploy gaps | 56 |
 | `#connect-views` | View Dictionary and admin-guide view pages | 66 |
-| `#cdk-connect` | `aws_cdk.aws_connect` constructs | 37 |
-| `#cdk-agentcore` | `aws_cdk.aws_bedrockagentcore` constructs | 26 |
-| `#cdk-q-in-connect` | `aws_cdk.aws_wisdom` constructs | 12 |
+| `#cdk-connect` | `aws_cdk.aws_connect` constructs | 39 |
+| `#cdk-agentcore` | `aws_cdk.aws_bedrockagentcore` constructs | 27 |
+| `#cdk-q-in-connect` | `aws_cdk.aws_wisdom` constructs | 14 |
 | `#cdk-lex` | `aws_cdk.aws_lex` constructs | 4 |
 | `#aws-workshops` | Connect workshops with deep-linked modules | 14 |
 | `#connect-ai-agents` | AI agent design and troubleshooting prose | 20 sources |

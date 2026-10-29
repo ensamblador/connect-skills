@@ -80,8 +80,9 @@ flags it. Run the full refresh instead; it is idempotent.
 
 ### refresh_cdk_docs.py
 
-Writes four catalogs from the CDK for Python API reference landing
-pages:
+Writes four catalogs from the CDK v2 reference module overview pages,
+`cdk/api/v2/docs/aws-cdk-lib.<module>-readme.html`. Construct links in
+the catalogs carry `?lang=python`, so they open on the Python tab:
 
 | Catalog | Source library |
 |---|---|
@@ -102,13 +103,19 @@ author notices and writes the one-liner.
 There is no per-catalog flag. The script regenerates the set, and in
 steady state an unchanged catalog only gets `last_refreshed` bumped.
 
-Write discipline matters here: a catalog whose table did not change is
-reported `unchanged` and is not rewritten at all. Fixing prose in the
-script's header template does not reach a catalog until its table
-changes, so edit those files directly when the prose must change now.
+A real run rewrites every catalog it fetched: the table rows' URLs,
+`last_refreshed`, `construct_count`, `content_checksum` and
+`source_urls`. A catalog whose rows did not change is reported
+`unchanged`. Prose outside the table and the description cells are kept
+as they are, so curate both in the catalog file itself.
 
 If one source page cannot be fetched, the failing URL is reported and
-that catalog is left untouched while the others still refresh.
+that catalog is left untouched while the others still refresh. A page
+that loads but yields no `Cfn*` construct links is treated the same way
+and the script exits 1. That guard exists because AWS moved the CDK
+reference from `cdk/api/v2/python` to `cdk/api/v2/docs` in October 2026:
+the old parser found 0 constructs on the redirected pages, and a real
+run would have emptied all four catalogs while exiting 0.
 
 Flags: `--dry-run`, `--steering-dir PATH`.
 
@@ -259,6 +266,7 @@ overwrites it. Change the script or the upstream source.
 uv run --project .kiro/connect_knowledge_mcp --with pytest --with hypothesis pytest .kiro/scripts/ -q
 ```
 
-12 tests, all property-based through `hypothesis`, no network. They
-cover checksum integrity, write discipline against a mocked fetch, and
+15 tests, no network. Most are property-based through `hypothesis`. They
+cover checksum integrity, write discipline against a mocked fetch, the
+no-constructs guard, parsing of the live CDK overview href shapes, and
 the freshness boundary.

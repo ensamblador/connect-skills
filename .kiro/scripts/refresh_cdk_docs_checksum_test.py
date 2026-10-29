@@ -85,18 +85,28 @@ def _construct_names(min_size: int = 0, max_size: int = 8) -> st.SearchStrategy:
 _descriptions = st.text(alphabet=_DESC_CHARS, min_size=0, max_size=60)
 
 
+def _module(library: str) -> str:
+    return library.removeprefix("aws_cdk.")
+
+
 def _construct_url(library: str, name: str) -> str:
-    return f"https://docs.aws.amazon.com/cdk/api/v2/python/{library}/{name}.html"
+    return (
+        "https://docs.aws.amazon.com/cdk/api/v2/docs/"
+        f"aws-cdk-lib.{_module(library)}.{name}.html?lang=python"
+    )
 
 
 def _make_landing_html(names: list[str], library: str) -> str:
-    """Synthesize a CDK landing page that links to each construct page.
+    """Synthesize a CDK module overview page that links to each construct.
 
-    Mirrors how the live pages link constructs (path-qualified hrefs) so
+    Mirrors how the live VitePress pages link constructs
+    (``/cdk/api/v2/docs/aws-cdk-lib.<module>.CfnX.html``) so
     ``parse_construct_links`` accepts them as the library's own constructs.
     """
     links = "".join(
-        f'<li><a href="{library}/{name}.html">{name}</a></li>' for name in names
+        f'<li><a href="/cdk/api/v2/docs/aws-cdk-lib.{_module(library)}.{name}.html">'
+        f"{name}</a></li>"
+        for name in names
     )
     return f"<html><body><ul>{links}</ul></body></html>"
 

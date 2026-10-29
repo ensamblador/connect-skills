@@ -1,10 +1,10 @@
 ---
 inclusion: manual
-last_refreshed: 2026-09-10
-construct_count: 12
+last_refreshed: 2026-10-29
+construct_count: 14
 source_urls:
-  - https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_wisdom.html
-content_checksum: sha256:0241a74145314c49
+  - https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom-readme.html
+content_checksum: sha256:29e713500cfc61b4
 ---
 
 # CDK construct catalog — Q in Connect / Wisdom (`aws_cdk.aws_wisdom`)
@@ -35,18 +35,20 @@ terminal) with the construct name.
 
 | Construct | Description |
 | --- | --- |
-| [CfnAssistant](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_wisdom/CfnAssistant.html) | Provisions a Q in Connect (Wisdom) assistant — the AI domain a Connect instance binds to. |
-| [CfnAssistantAssociation](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_wisdom/CfnAssistantAssociation.html) | Associates a knowledge base with a Q in Connect assistant. |
-| [CfnKnowledgeBase](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_wisdom/CfnKnowledgeBase.html) | Provisions a Q in Connect knowledge base (for example backed by an Amazon S3 document source). |
-| [CfnAIAgent](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_wisdom/CfnAIAgent.html) | Defines a Q in Connect AI agent (for example answer-recommendation or self-service). |
-| [CfnAIAgentVersion](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_wisdom/CfnAIAgentVersion.html) | Publishes an immutable, numbered version of a Q in Connect AI agent. |
-| [CfnAIPrompt](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_wisdom/CfnAIPrompt.html) | Defines a prompt template used by a Q in Connect AI agent. |
-| [CfnAIPromptVersion](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_wisdom/CfnAIPromptVersion.html) | Publishes an immutable, numbered version of an AI prompt. |
-| [CfnAIGuardrail](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_wisdom/CfnAIGuardrail.html) | Defines a guardrail that constrains a Q in Connect AI agent's responses. |
-| [CfnAIGuardrailVersion](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_wisdom/CfnAIGuardrailVersion.html) | Publishes an immutable, numbered version of an AI guardrail. |
-| [CfnMessageTemplate](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_wisdom/CfnMessageTemplate.html) | Defines a reusable message template for the assistant. |
-| [CfnMessageTemplateVersion](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_wisdom/CfnMessageTemplateVersion.html) | Publishes an immutable, numbered version of a message template. |
-| [CfnQuickResponse](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_wisdom/CfnQuickResponse.html) | Defines a quick response stored in a knowledge base. |
+| [CfnAssistant](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom.CfnAssistant.html?lang=python) | Provisions a Q in Connect (Wisdom) assistant — the AI domain a Connect instance binds to. |
+| [CfnAssistantAssociation](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom.CfnAssistantAssociation.html?lang=python) | Associates a knowledge base with a Q in Connect assistant. |
+| [CfnKnowledgeBase](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom.CfnKnowledgeBase.html?lang=python) | Provisions a Q in Connect knowledge base (for example backed by an Amazon S3 document source). |
+| [CfnAIAgent](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom.CfnAIAgent.html?lang=python) | Defines a Q in Connect AI agent (for example answer-recommendation or self-service). |
+| [CfnAIAgentVersion](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom.CfnAIAgentVersion.html?lang=python) | Publishes an immutable, numbered version of a Q in Connect AI agent. |
+| [CfnAIPrompt](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom.CfnAIPrompt.html?lang=python) | Defines a prompt template used by a Q in Connect AI agent. |
+| [CfnAIPromptVersion](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom.CfnAIPromptVersion.html?lang=python) | Publishes an immutable, numbered version of an AI prompt. |
+| [CfnAIGuardrail](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom.CfnAIGuardrail.html?lang=python) | Defines a guardrail that constrains a Q in Connect AI agent's responses. |
+| [CfnAIGuardrailVersion](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom.CfnAIGuardrailVersion.html?lang=python) | Publishes an immutable, numbered version of an AI guardrail. |
+| [CfnMessageTemplate](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom.CfnMessageTemplate.html?lang=python) | Defines a reusable message template for the assistant. |
+| [CfnMessageTemplateVersion](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom.CfnMessageTemplateVersion.html?lang=python) | Publishes an immutable, numbered version of a message template. |
+| [CfnQuickResponse](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom.CfnQuickResponse.html?lang=python) | Defines a quick response stored in a knowledge base. |
+| [CfnContent](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom.CfnContent.html?lang=python) | Creates a content item in a Q in Connect knowledge base from an asset uploaded first with `StartContentUpload`. |
+| [CfnContentAssociation](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_wisdom.CfnContentAssociation.html?lang=python) | Associates knowledge base content with a step-by-step guide, so Q in Connect offers the guide when it recommends that content. One association per content resource. |
 
 ---
 

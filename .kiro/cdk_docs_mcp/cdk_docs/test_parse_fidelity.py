@@ -14,15 +14,14 @@ in-scope construct page the fetcher retrieves, parsing preserves
 Validates: Requirements 1.3, 1.5
 
 Strategy: rather than ship a single hand-written fixture, this test
-*generates* synthetic-but-realistic CDK Sphinx construct pages. Hypothesis
+*generates* synthetic-but-realistic CDK v2 reference pages. Hypothesis
 picks a construct name (``Cfn`` + identifier), an in-scope library from the
 four ``fetch.LIBRARIES``, and a list of property records (name / type /
-description), and renders them into the same Sphinx HTML structure the real
+description), and renders them into the VitePress structure the real
 parser expects (mirroring the ``CfnInstance`` fixture in
-``test_construct_doc.py``: a ``dl.class`` with a constructor signature of
-``em.sig-param`` tokens and a ``Parameters`` field list of
-``<li><p><strong>name</strong> (<span
-class="sphinx_autodoc_typehints-type">Type</span>) - description</p>``).
+``test_construct_doc.py``: an ``<h1>``, an Initializer section whose
+signature names ``scope`` and ``id``, and a Construct Props section of
+``.member-row`` entries, each with a ``data-lang="python"`` variant).
 ``cdk_docs.fetch.fetch_page`` is mocked to return that HTML, so the test is
 deterministic and offline.
 
@@ -43,8 +42,8 @@ from cdk_docs import construct_doc, fetch
 
 
 # --------------------------------------------------------------------------
-# Constructor parameters the parser treats as CDK plumbing (never resource
-# properties). Kept in sync with ``construct_doc._PLUMBING_PARAMS``.
+# Initializer arguments that are CDK plumbing, never resource properties.
+# The rendered page names them in the Initializer signature only.
 # --------------------------------------------------------------------------
 _PLUMBING_NAMES = {"scope", "id"}
 
@@ -68,23 +67,22 @@ _construct_names = st.text(
 
 # Property names: snake_case-ish identifiers (lowercase + underscore), never
 # a plumbing parameter. The restricted alphabet guarantees the name is
-# recovered verbatim from ``<strong>name</strong>``.
+# recovered verbatim from ``<code class="member-name">``.
 _prop_names = st.text(
     alphabet="abcdefghijklmnopqrstuvwxyz_",
     min_size=1,
     max_size=24,
 ).filter(lambda s: s not in _PLUMBING_NAMES)
 
-# Type hints: short, link-free tokens like the real ``sphinx_autodoc_typehints``
-# spans render (``str``, ``Optional``, ``Union`` ...).
+# Type hints: short, link-free Python annotations like the real
+# ``member-type`` title attribute holds (``str``, ``typing.Union[...]`` ...).
 _type_text = st.text(
     alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789[],. ",
     min_size=1,
     max_size=30,
 ).map(lambda s: " ".join(s.split())).filter(lambda s: len(s) > 0)
 
-# Descriptions: plain prose with no HTML-significant chars and no hyphen, so
-# the parser's en/em-dash/hyphen description separator is unambiguous.
+# Descriptions: plain prose with no HTML-significant chars.
 _desc_text = st.text(
     alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ,.",
     min_size=1,
@@ -109,70 +107,46 @@ def _property_records(draw) -> list[dict[str, str]]:
 
 
 # --------------------------------------------------------------------------
-# Render a synthetic-but-realistic Sphinx construct page.
+# Render a synthetic-but-realistic CDK v2 reference construct page.
 # --------------------------------------------------------------------------
-def _render_param_li(name: str, ptype: str, description: str) -> str:
+def _render_prop_row(construct: str, name: str, ptype: str, description: str) -> str:
+    """One Construct Props row. The TS variant carries a decoy camelCase name."""
     return (
-        f"<li><p><strong>{name}</strong> "
-        f'(<span class="sphinx_autodoc_typehints-type"><code>'
-        f'<span class="pre">{ptype}</span></code></span>) '
-        f"\u2013 {description}</p></li>"
-    )
-
-
-def _render_sig_param(name: str) -> str:
-    return (
-        f'<em class="sig-param"><span class="n">'
-        f'<span class="pre">{name}</span></span></em>'
+        f'<div class="member-row" id="props-{construct.lower()}props-{name}">'
+        '<div class="member-line">'
+        f'<span class="lang-variant" data-lang="ts"><code class="member-name">ts_{name}</code></span>'
+        f'<span class="lang-variant" data-lang="python"><code class="member-name">{name}</code>'
+        f'<span class="member-type" title="{ptype}">{ptype}</span></span>'
+        "</div>"
+        f'<div class="member-summary">{description}</div></div>'
     )
 
 
 def _render_construct_page(construct: str, properties: list[dict[str, str]]) -> str:
-    """Render the ConstructDoc-shaped Sphinx HTML the real parser consumes.
+    """Render the ConstructDoc-shaped VitePress HTML the real parser consumes.
 
-    Always includes the ``scope`` / ``id`` plumbing parameters (as the real
-    pages do) so the test also exercises that plumbing is excluded from the
-    parsed property list.
+    The Initializer signature always names the ``scope`` / ``id`` plumbing
+    arguments, as the real pages do, so the test also checks that they never
+    surface in the parsed property list.
     """
-    sig_params = [
-        _render_sig_param("scope"),
-        _render_sig_param("id"),
-        '<em class="sig-param"><span class="o"><span class="pre">*</span></span></em>',
-    ]
-    sig_params += [_render_sig_param(p["name"]) for p in properties]
-    signature = ",\n    ".join(sig_params)
-
-    param_lis = [
-        _render_param_li("scope", "Construct", "Scope in which this resource is defined."),
-        _render_param_li("id", "str", "Construct identifier for this resource."),
-    ]
-    param_lis += [
-        _render_param_li(p["name"], p["type"], p["description"]) for p in properties
-    ]
-    lis = "\n        ".join(param_lis)
-
+    rows = "\n".join(
+        _render_prop_row(construct, p["name"], p["type"], p["description"])
+        for p in properties
+    )
     return f"""<html><body>
-<section id="{construct.lower()}">
-<h1>{construct}<a class="headerlink" href="#{construct.lower()}">\uf0c1</a></h1>
-<dl class="py class">
-  <dt class="sig sig-object py" id="library.{construct}">
-    <span class="sig-name descname"><span class="pre">{construct}</span></span>
-    <span class="sig-paren">(</span>
-    {signature}
-    <span class="sig-paren">)</span>
-  </dt>
-  <dd>
-    <p>Bases: <code>CfnResource</code></p>
-    <p>A generated construct page for the parse-fidelity property test.</p>
-    <dl class="field-list simple">
-      <dt class="field-odd">Parameters</dt>
-      <dd class="field-odd"><ul class="simple">
-        {lis}
-      </ul></dd>
-    </dl>
-  </dd>
-</dl>
-</section>
+<div class="item appearance"><p>Appearance</p></div>
+<div data-pagefind-body="true">
+<h1 id="class-{construct.lower()}-construct"><span>{construct}</span></h1>
+<p>A generated construct page for the parse-fidelity property test.</p>
+<nav class="inheritance-chain"><a class="chain-item" href="#">CfnResource</a></nav>
+<h2 id="initializer">Initializer</h2>
+<div><div class="lang-variant" data-lang="python"><pre><code>{construct}(scope: Construct, id: str, props: {construct}Props)</code></pre></div></div>
+<h2 id="props-{construct.lower()}props">Construct Props</h2>
+<div class="lang-tabs"><div class="props-table member-list">
+{rows}
+</div></div>
+<h2 id="properties">Properties</h2>
+</div>
 </body></html>"""
 
 
@@ -201,7 +175,11 @@ def test_property3_doc_parse_fidelity(
 
     # The canonical per-construct URL the parser builds and must preserve
     # verbatim into the result (design M2 / Req 1.5).
-    expected_url = f"{construct_doc.CDK_PYTHON_REF_ROOT}{library}/{construct}.html"
+    module = library.removeprefix("aws_cdk.")
+    expected_url = (
+        f"{construct_doc.CDK_PYTHON_REF_ROOT}"
+        f"aws-cdk-lib.{module}.{construct}.html?lang=python"
+    )
 
     with mock.patch.object(fetch, "fetch_page", return_value=html) as mock_fetch:
         result = construct_doc.get_cdk_construct_doc(construct, library)
@@ -230,7 +208,7 @@ def test_property3_doc_parse_fidelity(
         assert parsed_names, "page documented properties but parsed list was empty"
         assert parsed_names == documented_names
     else:
-        # Only plumbing parameters present -> no resource properties parsed.
+        # Empty Construct Props section: no resource properties parsed.
         assert parsed_names == []
 
 
@@ -238,7 +216,7 @@ def _sanity_example() -> dict[str, Any]:
     """Tiny non-Hypothesis smoke check that the rendered HTML parses at all."""
     props = [
         {"name": "instance_alias", "type": "str", "description": "The alias of instance."},
-        {"name": "directory_id", "type": "Optional", "description": "The directory id."},
+        {"name": "directory_id", "type": "str", "description": "The directory id."},
     ]
     html = _render_construct_page("CfnInstance", props)
     with mock.patch.object(fetch, "fetch_page", return_value=html):
@@ -254,6 +232,6 @@ def test_property3_rendered_fixture_parses() -> None:
     result = _sanity_example()
     assert isinstance(result, dict)
     assert result["construct"] == "CfnInstance"
-    assert result["url"].endswith("aws_cdk.aws_connect/CfnInstance.html")
+    assert result["url"].endswith("aws-cdk-lib.aws_connect.CfnInstance.html?lang=python")
     names = [p["name"] for p in result["properties"]]
     assert names == ["instance_alias", "directory_id"]

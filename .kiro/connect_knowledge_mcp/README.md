@@ -59,20 +59,41 @@ URLs are full https links, suitable for inline citation.
 search_blogs(query: str, blogs: list[str] | None = None, all_blogs: bool = False) -> str
 ```
 
-Searches AWS blogs through the public CloudSearch endpoint. Use it for
-implementation patterns, walkthroughs, launches, and partner content.
+Searches AWS blogs through the ranked search behind the aws.amazon.com
+search box (`prod.search.marketing.aws.dev`). Use it for implementation
+patterns, walkthroughs, launches, and partner content. Hits keep the
+search's relevance order and carry their publish date.
+
+The ranked search reaches only its top 30 results, and the blog filter
+runs on those 30, so a narrow filter can return few hits. One- and
+two-word queries match keywords and pull in one-letter-off matches
+("chile" finds "while"); the tool drops any hit whose title and excerpt
+lack the query words. Longer queries match by meaning, so a longer,
+specific query usually ranks better: "Amazon Connect Cases case
+management" beats "Amazon Connect Cases".
+
+When the ranked search fails, or keeps no post from the requested blogs,
+the tool answers from the aws.amazon.com blog directory instead. That
+reply starts with a `Note:` line naming the reason. The directory is a
+keyword filter ranked locally by word matches, so expect more noise, and
+it matches `Cases` and `Case` separately.
 
 In:
 - `query`, free-text search string.
-- `blogs`, optional list of blog display names. When `None` and
-  `all_blogs` is `False`, the Connect-tuned default set applies:
-  `AWS Contact Center`, `AWS Partner Network (APN) Blog`,
-  `AWS Messaging Blog`. Pass an explicit list to redirect, for example
-  `["AWS Machine Learning Blog"]`.
+- `blogs`, optional list of blogs as URL slugs, the segment after
+  `/blogs/` in a post URL. When `None` and `all_blogs` is `False`, the
+  Connect-tuned default set applies: `contact-center`, `apn`,
+  `messaging-and-targeting`. Pass an explicit list to redirect, for
+  example `["machine-learning"]`. The display names `AWS Contact Center`,
+  `AWS Partner Network (APN) Blog`, `AWS Messaging Blog` and
+  `AWS Machine Learning Blog` are still accepted. Any other display name
+  returns an error.
 - `all_blogs`, when `True` searches every AWS blog and overrides
   `blogs`. Use it as a fallback when the default set returns nothing.
 
-Out: same `Title / URL / Snippet` block format as `search_docs`.
+Out: the `search_docs` block format plus a `Published: YYYY-MM-DD` line
+after `URL`. For "what is the latest post on X", sort the hits by
+`Published` yourself; the order is relevance, not date.
 
 ### search_repost
 
@@ -164,8 +185,9 @@ returning a slice: `Contact types` on `get-customer-input` is 267
 characters against 31,000 for the whole page.
 
 The other two doc tools still parse, and should. `get_cdk_construct_doc`
-reads Sphinx HTML and `get_view_component_doc` reads a JavaScript-
-rendered Storybook page, so neither has a markdown source to forward.
+reads the CDK v2 reference HTML, whose markdown twin holds only the
+TypeScript variant. `get_view_component_doc` reads a JavaScript-rendered
+Storybook page. Neither has a usable markdown source to forward.
 
 ### get_view_component_doc
 

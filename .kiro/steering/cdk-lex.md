@@ -1,10 +1,10 @@
 ---
 inclusion: manual
-last_refreshed: 2026-09-10
+last_refreshed: 2026-10-29
 construct_count: 4
 source_urls:
-  - https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_lex.html
-content_checksum: sha256:371caec2d5fbd262
+  - https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lex-readme.html
+content_checksum: sha256:a458ed8e58f83abe
 ---
 
 # CDK construct catalog — Amazon Lex V2 (`aws_cdk.aws_lex`)
@@ -34,7 +34,7 @@ terminal) with the construct name.
 
 | Construct | Description |
 | --- | --- |
-| [CfnBot](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_lex/CfnBot.html) | Provisions an Amazon Lex V2 bot, including its locales, intents, and slot types. |
-| [CfnBotAlias](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_lex/CfnBotAlias.html) | Creates an alias that points at a Lex bot version for stable deployment and Connect association. |
-| [CfnBotVersion](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_lex/CfnBotVersion.html) | Publishes an immutable, numbered version of a Lex bot. |
-| [CfnResourcePolicy](https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_lex/CfnResourcePolicy.html) | Attaches a resource-based IAM policy to a Lex bot or bot alias. |
+| [CfnBot](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lex.CfnBot.html?lang=python) | Provisions an Amazon Lex V2 bot, including its locales, intents, and slot types. |
+| [CfnBotAlias](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lex.CfnBotAlias.html?lang=python) | Creates an alias that points at a Lex bot version for stable deployment and Connect association. |
+| [CfnBotVersion](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lex.CfnBotVersion.html?lang=python) | Publishes an immutable, numbered version of a Lex bot. |
+| [CfnResourcePolicy](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lex.CfnResourcePolicy.html?lang=python) | Attaches a resource-based IAM policy to a Lex bot or bot alias. |

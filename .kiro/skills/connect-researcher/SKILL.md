@@ -84,8 +84,15 @@ or 20 when the first page is noisy.
 Searches AWS blogs. Defaults to the Connect-tuned set
 (`AWS Contact Center`, `AWS Partner Network (APN) Blog`,
 `AWS Messaging Blog`). Pass `all_blogs=True` as a fallback when nothing
-turns up. Pass an explicit `blogs=["AWS Machine Learning Blog"]` list
-to redirect.
+turns up. Pass an explicit `blogs=["machine-learning"]` list, a URL slug
+or a known display name, to redirect.
+
+Hits come in relevance order, each with a `Published` date. Write
+queries of three or more specific words ("Amazon Connect Cases case
+management", not "Cases"): longer queries rank by meaning, while one or
+two words match keywords only. For "latest post" questions, sort the
+hits by `Published` yourself. A reply that starts with `Note:` came from
+the keyword fallback; weigh it as noisier.
 
 ### `search_repost(query, tag_ids=None, no_tag=False, include_unanswered=False)`
 

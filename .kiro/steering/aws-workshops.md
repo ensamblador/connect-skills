@@ -1,6 +1,6 @@
 ---
 inclusion: manual
-last_refreshed: 2026-09-10
+last_refreshed: 2026-10-29
 workshop_count: 14
 source_urls:
   - https://catalog.workshops.aws/self-service-ai-agents/en-US
@@ -20,7 +20,7 @@ source_urls:
   - https://catalog.us-east-1.prod.workshops.aws/workshops/401c630f-2901-4f2d-8468-bd9a9066a78f/en-US
   - https://catalog.us-east-1.prod.workshops.aws/workshops/a0299a82-da56-4bd0-b8cb-d7f76dd42d09/en-US
   - https://catalog.us-east-1.prod.workshops.aws/workshops/f33ac20c-57f6-45ee-89fc-f80c5522e2bf/en-US
-content_checksum: sha256:912affae8904f865
+content_checksum: sha256:69cc8e94e73443ec
 ---
 
 # Amazon Connect workshops & how-to catalog
@@ -203,9 +203,10 @@ JavaScript-rendered and a plain HTTP fetch returns an empty shell.
 - **Modules:**
   - [Introduction](https://catalog.workshops.aws/amazon-connect-optimization/en-US/1-introduction)
   - [Configuration](https://catalog.workshops.aws/amazon-connect-optimization/en-US/2-configuration)
-  - [Forecasting in Amazon Connect](https://catalog.workshops.aws/amazon-connect-optimization/en-US/3-forecasting)
-  - [Capacity planning in Amazon Connect](https://catalog.workshops.aws/amazon-connect-optimization/en-US/4-capacityplanning)
-  - [Scheduling in Amazon Connect](https://catalog.workshops.aws/amazon-connect-optimization/en-US/5-scheduling)
+  - [Forecasting in Amazon Connect Customer](https://catalog.workshops.aws/amazon-connect-optimization/en-US/3-forecasting)
+  - [Capacity planning in Amazon Connect Customer](https://catalog.workshops.aws/amazon-connect-optimization/en-US/4-capacityplanning)
+  - [Scheduling in Amazon Connect Customer](https://catalog.workshops.aws/amazon-connect-optimization/en-US/5-scheduling)
+  - [Multi-Skill Scheduling in Amazon Connect Customer](https://catalog.workshops.aws/amazon-connect-optimization/en-US/6-multiskill)
   - [Agent Scheduling Analytics](https://catalog.workshops.aws/amazon-connect-optimization/en-US/6-analytics)
 
 ---
@@ -228,24 +229,27 @@ JavaScript-rendered and a plain HTTP fetch returns an empty shell.
 
 ---
 
-## Agentic CX designer - Build, Test, Optimize: Hands-On with Agentic AI on Amazon Connect Customer
+## Build, Test, Optimize: Hands-On with Amazon Connect Customer agentic CX designer (ACXD)
 
 - **URL:** https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US
 - **One-liner:** Nine-part hands-on build of an agentic self-service experience in the Amazon Connect Customer agentic CX designer (ACXD). Deploy a backend, expose it to the agent as tools via Data Requests, shape behaviour with the agent prompt and escalation, blend the agentic path with a deterministic entry flow, then instrument it with Conversation Analytics, ACXD in-canvas analytics, and analytics tags. Closes with Agentic Voices, Touchpoint modalities, and Live Sync. Pick one of ten industry scenarios (insurance, retail banking, healthcare, airlines, retail, telecom, utilities, automotive, manufacturing, public sector).
 - **Modules:**
   - [Introduction](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/introduction)
   - [Choose your scenario](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/choose-your-scenario)
+  - [Part 0: Facilitator-led quick build](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/0-live-follow-along)
   - [Part 1: Environment setup](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/1-setup)
   - [Part 2: Your backend and its data](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/2-access-resources)
   - [Part 3: Give the agent tools](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/3-setup-ai-agent)
   - [Part 4: Shape the agent](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/4-modify-ai-agent)
   - [Part 5: Blending structured and agentic](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/5-deterministic-flow)
   - [Part 6: Observability](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/6-observe)
-  - [Part 7: Amazon Connect Agentic Voices](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/7-agentic-voice)
-  - [Part 8: Modalities with Touchpoint](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/8-modalities)
-  - [Part 9: Live Sync](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/9-live-sync)
+  - [Part 7: Modalities with Touchpoint](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/7-modalities)
+  - [Part 8: Live Sync](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/8-live-sync)
+  - [Additional modules](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/additional-modules)
   - [Scenario reference](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/scenarios)
   - [Architecture reference](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/architecture)
+  - [Additional modules](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/additional-modules/)
+  - [Introduction](https://catalog.us-east-1.prod.workshops.aws/workshops/dd046ddd-9305-417e-b620-ac4ffc378690/en-US/introduction/)
 
 ---
 

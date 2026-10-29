@@ -67,17 +67,25 @@ def search_blogs(
     blogs: list[str] | None = None,
     all_blogs: bool = False,
 ) -> str:
-    """Search AWS blogs via the public CloudSearch endpoint.
+    """Search AWS blogs via the aws.amazon.com ranked search.
 
     Best for implementation patterns, walkthroughs, recent launches, and
     partner-led content. By default scoped to the three blogs that carry
     most Amazon Connect content: ``AWS Contact Center``,
     ``AWS Partner Network (APN) Blog``, and ``AWS Messaging Blog``.
+    Hits keep the search's relevance order and each carries its publish
+    date; sort by ``Published`` yourself for "latest post" questions.
+    Longer, specific queries rank better than one or two words. If the
+    ranked search fails or keeps nothing from the requested blogs, the
+    reply starts with a ``Note:`` line and comes from the blog directory
+    keyword filter instead.
 
     Args:
         query: Free-text search query.
-        blogs: Optional list of blog display names to restrict the
-            search to. When ``None`` and ``all_blogs`` is ``False``, the
+        blogs: Optional list of blogs to restrict the search to, as URL
+            slugs (the segment after ``/blogs/`` in a post URL, e.g.
+            ``machine-learning``) or one of the display names above.
+            When ``None`` and ``all_blogs`` is ``False``, the
             Connect-tuned default set is used. Pass an explicit list to
             override.
         all_blogs: When ``True``, search every AWS blog (overrides
@@ -85,8 +93,9 @@ def search_blogs(
             set returns nothing.
 
     Returns:
-        Multi-hit formatted block (Title / URL / Snippet, separated by
-        ``---``), or an error / no-results string.
+        Multi-hit formatted block (Title / URL / Published / Snippet,
+        separated by ``---``), optionally prefixed by one ``Note:`` line,
+        or an error / no-results string.
     """
     if all_blogs:
         return aws_blog_search(query, blogs=[])

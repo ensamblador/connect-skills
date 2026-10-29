@@ -10,11 +10,15 @@ are deterministic and offline. They lock in the ConstructDoc contract
       descriptive error *string* (never a raise) that names the requested
       identifier and the reason.
 
-The HTML fixture below is a trimmed copy of the Sphinx structure the real
-``aws_cdk.aws_connect/CfnInstance.html`` page uses (a ``dl.class`` with a
-constructor signature of ``em.sig-param`` tokens and a ``Parameters``
-field list of ``<li><p><strong>name</strong> (<span
-class="sphinx_autodoc_typehints-type">Type</span>) – description</p>``).
+The HTML fixture below is a trimmed copy of the VitePress structure the
+real ``aws-cdk-lib.aws_connect.CfnInstance.html`` page uses: an ``<h1>``
+and lead paragraph, an Initializer section, then Construct Props,
+Properties and Methods sections of ``.member-row`` entries. Each row
+renders one ``<span class="lang-variant" data-lang="...">`` per language.
+The fixture keeps the TypeScript variant beside the Python one so the
+tests prove the parser reads the Python names. It also keeps the theme's
+"Appearance" paragraph, which the Sphinx parser once returned as the
+description.
 
 Run with::
 
@@ -30,51 +34,79 @@ from cdk_docs import construct_doc, fetch
 
 
 SOURCE_URL = (
-    "https://docs.aws.amazon.com/cdk/api/v2/python/"
-    "aws_cdk.aws_connect/CfnInstance.html"
+    "https://docs.aws.amazon.com/cdk/api/v2/docs/"
+    "aws-cdk-lib.aws_connect.CfnInstance.html?lang=python"
 )
 
+
+def _prop_row(ts_name: str, py_name: str, py_type: str, summary: str, *, required: bool) -> str:
+    """One Construct Props row with TypeScript and Python variants."""
+    optional = (
+        ""
+        if required
+        else '<span class="member-optional"><span aria-hidden="true">?</span>'
+        '<span class="member-optional-label">optional</span></span>'
+    )
+    badge = '<span class="member-required">required</span>' if required else ""
+    return (
+        f'<div class="member-row" id="props-cfninstanceprops-{ts_name.lower()}">'
+        '<div class="member-line">'
+        f'<span class="lang-variant" data-lang="ts"><code class="member-name">{ts_name}</code>'
+        f'{optional}<span class="member-type" title="string">string</span></span>'
+        f'<span class="lang-variant" data-lang="python"><code class="member-name">{py_name}</code>'
+        f'{optional}<span class="member-type" title="{py_type}">{py_type}</span></span>'
+        f"{badge}</div>"
+        f'<div class="member-summary">{summary}</div></div>'
+    )
+
+
 # Trimmed but structurally faithful CfnInstance page.
-SAMPLE_HTML = """
+SAMPLE_HTML = f"""
 <html><body>
-<section id="cfninstance">
-<h1>CfnInstance<a class="headerlink" href="#cfninstance">\uf0c1</a></h1>
-<dl class="py class">
-  <dt class="sig sig-object py" id="aws_cdk.aws_connect.CfnInstance">
-    <span class="sig-name descname"><span class="pre">CfnInstance</span></span>
-    <span class="sig-paren">(</span>
-    <em class="sig-param"><span class="n"><span class="pre">scope</span></span></em>,
-    <em class="sig-param"><span class="n"><span class="pre">id</span></span></em>,
-    <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>,
-    <em class="sig-param"><span class="n"><span class="pre">attributes</span></span></em>,
-    <em class="sig-param"><span class="n"><span class="pre">identity_management_type</span></span></em>,
-    <em class="sig-param"><span class="n"><span class="pre">directory_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>,
-    <em class="sig-param"><span class="n"><span class="pre">instance_alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>,
-    <span class="sig-paren">)</span>
-  </dt>
-  <dd>
-    <p>Bases: <code>CfnResource</code></p>
-    <p>A toggle for an individual feature at the instance level.</p>
-    <dl class="field-list simple">
-      <dt class="field-odd">Parameters</dt>
-      <dd class="field-odd"><ul class="simple">
-        <li><p><strong>scope</strong> (<span class="sphinx_autodoc_typehints-type"><code><span class="pre">Construct</span></code></span>) \u2013 Scope in which this resource is defined.</p></li>
-        <li><p><strong>id</strong> (<span class="sphinx_autodoc_typehints-type"><code><span class="pre">str</span></code></span>) \u2013 Construct identifier for this resource (unique in its scope).</p></li>
-        <li><p><strong>attributes</strong> (<span class="sphinx_autodoc_typehints-type"><code><span class="pre">Union</span></code></span>) \u2013 A toggle for an individual feature at the instance level.</p></li>
-        <li><p><strong>identity_management_type</strong> (<span class="sphinx_autodoc_typehints-type"><code><span class="pre">str</span></code></span>) \u2013 The identity management type.</p></li>
-        <li><p><strong>directory_id</strong> (<span class="sphinx_autodoc_typehints-type"><code><span class="pre">Optional</span></code></span>) \u2013 The identifier for the directory.</p></li>
-        <li><p><strong>instance_alias</strong> (<span class="sphinx_autodoc_typehints-type"><code><span class="pre">Optional</span></code></span>) \u2013 The alias of instance.</p></li>
-      </ul></dd>
-    </dl>
-  </dd>
-</dl>
-<dl class="py attribute">
-  <dt id="aws_cdk.aws_connect.CfnInstance.attr_arn">
-    <span class="sig-name descname"><span class="pre">attr_arn</span></span>
-  </dt>
-  <dd><p>The Amazon Resource Name (ARN) of the instance.</p></dd>
-</dl>
-</section>
+<div class="VPNavScreen"><div class="item appearance"><p>Appearance</p></div></div>
+<div data-pagefind-body="true">
+<h1 id="class-cfninstance-construct"><span>CfnInstance</span>
+  <span class="VPBadge tip api-badge api-badge-l1">L1 construct</span></h1>
+<p>The <code>AWS::Connect::Instance</code> resource specifies an Amazon Connect instance.</p>
+<nav class="inheritance-chain"><a class="chain-item" href="#">CfnResource</a></nav>
+<h2 id="initializer">Initializer</h2>
+<div><div class="lang-variant" data-lang="python"><pre><code>CfnInstance(scope: Construct, id: str, props: CfnInstanceProps)</code></pre></div></div>
+<h2 id="props-cfninstanceprops">Construct Props</h2>
+<div class="lang-tabs"><div class="props-table member-list">
+{_prop_row("attributes", "attributes", "typing.Union[IResolvable, AttributesProperty]",
+           "A toggle for an individual feature at the instance level.", required=True)}
+{_prop_row("directoryId", "directory_id", "str",
+           "The identifier for the directory.", required=False)}
+{_prop_row("identityManagementType", "identity_management_type", "str",
+           "The identity management type.", required=True)}
+{_prop_row("instanceAlias", "instance_alias", "str",
+           "The alias of instance.", required=False)}
+</div></div>
+<h2 id="properties">Properties</h2>
+<div class="lang-tabs"><div class="props-table member-list">
+<div class="member-row" id="attrarn"><div class="member-line">
+<span class="lang-variant" data-lang="ts"><code class="member-name">attrArn</code></span>
+<span class="lang-variant" data-lang="python"><code class="member-name">attr_arn</code>
+<span class="member-type" title="str">str</span></span></div>
+<div class="member-summary">The Amazon Resource Name (ARN) of the instance.</div></div>
+</div></div>
+<h2 id="methods">Methods</h2>
+<div class="lang-tabs"><div class="methods-table member-list">
+<div class="member-row" id="addoverride"><div class="member-line">
+<span class="lang-variant" data-lang="ts"><code class="member-signature">addOverride(path: string, value: any): void</code></span>
+<span class="lang-variant" data-lang="python"><code class="member-signature">def add_override(self, path: str, value: typing.Any) -&gt; None</code></span></div>
+<div class="member-summary">Adds an override to the synthesized CloudFormation resource.</div></div>
+</div></div>
+</div>
+</body></html>
+"""
+
+# A page with no construct heading or Initializer section: the shape the
+# Sphinx parser met after AWS's redirect, reduced to the theme chrome.
+UNRECOGNISED_HTML = """
+<html><body>
+<div class="item appearance"><p>Appearance</p></div>
+<p>Loading API index...</p>
 </body></html>
 """
 
@@ -110,46 +142,65 @@ class GetConstructDocSuccessTest(unittest.TestCase):
         # The fetched URL is the same canonical per-construct URL.
         self.mock_fetch.assert_called_once_with(SOURCE_URL)
 
-    def test_property_list_non_empty_and_excludes_plumbing(self) -> None:
+    def test_property_list_uses_python_names_and_excludes_plumbing(self) -> None:
         result = construct_doc.get_cdk_construct_doc(
             "CfnInstance", "aws_cdk.aws_connect"
         )
         names = [p["name"] for p in result["properties"]]
-        self.assertGreater(len(names), 0)
-        # scope/id are CDK plumbing, not resource properties.
+        self.assertEqual(
+            names,
+            ["attributes", "directory_id", "identity_management_type", "instance_alias"],
+        )
+        # scope/id appear only in the Initializer signature.
         self.assertNotIn("scope", names)
         self.assertNotIn("id", names)
-        self.assertIn("attributes", names)
-        self.assertIn("identity_management_type", names)
+        # The TypeScript variant's camelCase name is never picked.
+        self.assertNotIn("identityManagementType", names)
 
     def test_property_records_carry_type_required_description(self) -> None:
         result = construct_doc.get_cdk_construct_doc(
             "CfnInstance", "aws_cdk.aws_connect"
         )
         by_name = {p["name"]: p for p in result["properties"]}
-        # required (no default in the signature)
+        # required: the row carries the member-required badge
         self.assertTrue(by_name["identity_management_type"]["required"])
         self.assertEqual(by_name["identity_management_type"]["type"], "str")
         self.assertEqual(
             by_name["identity_management_type"]["description"],
             "The identity management type.",
         )
-        # optional (has a default in the signature)
+        self.assertEqual(
+            by_name["attributes"]["type"],
+            "typing.Union[IResolvable, AttributesProperty]",
+        )
+        # optional: the Python variant carries member-optional
         self.assertFalse(by_name["directory_id"]["required"])
 
-    def test_description_skips_bases_line(self) -> None:
+    def test_description_is_lead_paragraph_not_page_chrome(self) -> None:
+        # The Sphinx parser fell back to the first <p> on the page, which
+        # on the new site is the theme's "Appearance" toggle.
         result = construct_doc.get_cdk_construct_doc(
             "CfnInstance", "aws_cdk.aws_connect"
         )
-        self.assertIsNotNone(result["description"])
-        self.assertFalse(result["description"].startswith("Bases:"))
+        self.assertEqual(
+            result["description"],
+            "The AWS::Connect::Instance resource specifies an Amazon Connect instance.",
+        )
 
     def test_raw_sections_is_escape_hatch_dict(self) -> None:
         result = construct_doc.get_cdk_construct_doc(
             "CfnInstance", "aws_cdk.aws_connect"
         )
-        self.assertIsInstance(result["raw_sections"], dict)
-        self.assertIn("Parameters", result["raw_sections"])
+        sections = result["raw_sections"]
+        self.assertIsInstance(sections, dict)
+        self.assertEqual(
+            sorted(sections), ["Attributes", "Description", "Methods", "Parameters"]
+        )
+        self.assertIn(
+            "attr_arn: The Amazon Resource Name (ARN) of the instance.",
+            sections["Attributes"],
+        )
+        self.assertEqual(sections["Methods"], "add_override")
 
     def test_library_none_searches_all_in_scope_libraries(self) -> None:
         # Library omitted -> first candidate that resolves wins.
@@ -192,6 +243,18 @@ class GetConstructDocErrorTest(unittest.TestCase):
             except Exception as exc:  # pragma: no cover - guards the no-raise contract
                 self.fail(f"get_cdk_construct_doc raised: {exc}")
         self.assertIsInstance(result, str)
+
+    def test_unrecognised_layout_returns_error_not_empty_result(self) -> None:
+        # A page without the construct layout must report a miss. An empty
+        # property list would read like a construct with no properties.
+        with mock.patch.object(fetch, "fetch_page", return_value=UNRECOGNISED_HTML):
+            result = construct_doc.get_cdk_construct_doc(
+                "CfnInstance", "aws_cdk.aws_connect"
+            )
+        self.assertIsInstance(result, str)
+        self.assertIn("CfnInstance", result)
+        self.assertIn("failed to parse", result)
+        self.assertIn("Initializer", result)
 
     def test_empty_response_returns_error_string(self) -> None:
         with mock.patch.object(fetch, "fetch_page", return_value=""):

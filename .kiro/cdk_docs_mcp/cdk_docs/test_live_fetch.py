@@ -108,6 +108,31 @@ def network_available() -> None:
         pytest.skip(f"Network probe raised unexpectedly: {exc!r}; skipping.")
 
 
+def test_live_pagefind_search_per_library(network_available: None) -> None:
+    """Query the CDK site's Pagefind index with its real WASM, one hit per library.
+
+    Real network and the real ``wasm.en-us.pagefind`` module in wasmtime.
+    Skips on a transport failure; fails when the engine runs but the index
+    no longer returns the known construct for a library, which is what an
+    upstream format, version, or filter rename would look like.
+    """
+    from cdk_docs import pagefind
+
+    for library, construct in sorted(LIBRARY_CONSTRUCTS.items()):
+        module = pagefind.normalize_module(library)
+        try:
+            reply = pagefind.run_pagefind(construct, limit=10, module=module, kind="construct")
+        except pagefind.PagefindUnavailable as exc:
+            reason = str(exc)
+            if _looks_like_transport_failure(reason):
+                pytest.skip(f"Pagefind search unavailable: {reason}")
+            pytest.fail(f"Pagefind search failed for {construct} in {module}: {reason}")
+        assert not reply["unknownFilters"], f"index dropped filter values: {reply['unknownFilters']}"
+        urls = [r["url"] for r in reply["results"]]
+        expected = f"aws-cdk-lib.{library.removeprefix('aws_cdk.')}.{construct}.html"
+        assert any(u.endswith(expected) for u in urls), f"{expected} not in {urls}"
+
+
 @pytest.mark.parametrize(
     ("library", "construct"),
     sorted(LIBRARY_CONSTRUCTS.items()),
@@ -150,7 +175,8 @@ def test_live_fetch_per_library(
     # The source URL is preserved and names both the library and construct.
     url = result["url"]
     assert isinstance(url, str) and url
-    assert library in url, f"library {library!r} not in source url {url!r}"
+    module = library.removeprefix("aws_cdk.")
+    assert f"aws-cdk-lib.{module}." in url, f"module {module!r} not in source url {url!r}"
     assert construct in url, f"construct {construct!r} not in source url {url!r}"
 
     # The real page documents resource properties -> the parsed list is

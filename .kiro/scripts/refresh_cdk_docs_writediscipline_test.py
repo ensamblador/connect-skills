@@ -24,6 +24,14 @@ This splits cleanly into the two halves Requirement 4 names:
   and reports the failing source URL on its ``RefreshResult`` (status
   ``failed``), while the catalogs whose fetch succeeded may still be
   rewritten.
+* **Unrecognized layout counts as a failed fetch:** a page that yields no
+  ``Cfn*`` construct links leaves its catalog unchanged and is reported
+  ``failed``, in dry-run and real runs alike. This guard exists because
+  the October 2026 CDK reference move left the old parser finding 0
+  constructs, and merging an empty set would have emptied all four
+  catalogs while exiting 0. A companion test parses hrefs copied from the
+  live VitePress overview pages, so the guard cannot trip on the real
+  layout.
 
 Both halves are driven by ``hypothesis`` (>=100 iterations) over a mocked
 ``fetcher`` — the injectable seam ``refresh_one`` / ``refresh_all`` expose —
@@ -50,9 +58,12 @@ from hypothesis import strategies as st
 
 # The script under test lives next to this test in scripts/.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import pytest  # noqa: E402
+
 from refresh_cdk_docs import (  # noqa: E402
     CATALOGS,
     STEERING_DIR,
+    parse_construct_links,
     refresh_all,
 )
 
@@ -66,9 +77,9 @@ _construct_names = st.builds(
     st.text(alphabet=string.ascii_letters + string.digits, min_size=1, max_size=12),
 ).filter(lambda name: not name.endswith("Props"))
 
-# A per-catalog set of constructs the mock page links to (may be empty —
-# an empty page is a valid, if drastic, upstream change).
-_construct_name_list = st.lists(_construct_names, min_size=0, max_size=8, unique=True)
+# A per-catalog set of constructs the mock page links to. At least one:
+# a page with none is an unrecognized layout, covered by its own test.
+_construct_name_list = st.lists(_construct_names, min_size=1, max_size=8, unique=True)
 
 # One construct-name list per catalog, in CATALOGS order.
 _name_sets_per_catalog = st.tuples(*([_construct_name_list] * len(CATALOGS)))
@@ -77,13 +88,17 @@ _name_sets_per_catalog = st.tuples(*([_construct_name_list] * len(CATALOGS)))
 _fail_flags = st.lists(st.booleans(), min_size=len(CATALOGS), max_size=len(CATALOGS))
 
 
-def _landing_page_html(names: list[str]) -> str:
-    """Render a minimal CDK landing page that links to each construct.
+def _landing_page_html(names: list[str], library: str) -> str:
+    """Render a minimal CDK module overview page linking each construct.
 
-    Uses bare ``CfnX.html`` hrefs (the form on the aws_connect README),
-    which ``parse_construct_links`` accepts for any library.
+    Uses the live VitePress href form,
+    ``/cdk/api/v2/docs/aws-cdk-lib.<module>.CfnX.html``.
     """
-    anchors = "".join(f'<a href="{name}.html">{name}</a>\n' for name in names)
+    module = library.removeprefix("aws_cdk.")
+    anchors = "".join(
+        f'<a href="/cdk/api/v2/docs/aws-cdk-lib.{module}.{name}.html">{name}</a>\n'
+        for name in names
+    )
     return f"<html><body><h1>module</h1>{anchors}</body></html>"
 
 
@@ -111,7 +126,7 @@ def test_dry_run_writes_nothing(name_sets: tuple[list[str], ...]) -> None:
     every steering file byte-for-byte unchanged. Validates: Requirements 4.4.
     """
     html_by_url = {
-        catalog.source_url: _landing_page_html(list(names))
+        catalog.source_url: _landing_page_html(list(names), catalog.library)
         for catalog, names in zip(CATALOGS, name_sets)
     }
 
@@ -166,7 +181,7 @@ def test_failed_fetch_leaves_its_file_unchanged_and_reports_url(
         if fail
     }
     html_by_url = {
-        catalog.source_url: _landing_page_html(list(names))
+        catalog.source_url: _landing_page_html(list(names), catalog.library)
         for catalog, names in zip(CATALOGS, name_sets)
     }
 
@@ -210,3 +225,75 @@ def test_failed_fetch_leaves_its_file_unchanged_and_reports_url(
                     f"unexpected status {result.status!r} for {catalog.filename}"
                 )
                 assert result.source_url == catalog.source_url
+
+
+# --- Unrecognized layout: no Cfn* links leaves every file unchanged --------
+
+
+# The pre-October-2026 Sphinx href forms. The current parser must not
+# accept them, so a page still shaped like this reads as "no constructs".
+_RETIRED_SPHINX_PAGE = (
+    "<html><body>"
+    '<a href="CfnInstance.html">CfnInstance</a>'
+    '<a href="aws_cdk.aws_lex/CfnBot.html">CfnBot</a>'
+    '<a href="#">Appearance</a>'
+    "</body></html>"
+)
+
+
+@pytest.mark.parametrize("dry_run", [True, False])
+def test_page_without_constructs_fails_and_leaves_file_unchanged(dry_run: bool) -> None:
+    """A fetched page with no recognizable construct links is a failure.
+
+    Without this guard, merging the empty live set drops every existing
+    row and the run exits 0. Every catalog must stay byte-identical, and
+    every result must be ``failed`` with the page URL in the error.
+    """
+
+    def fetcher(url: str, query_hint: str) -> tuple[str, str]:
+        return url, _RETIRED_SPHINX_PAGE
+
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+        originals = _seed_steering_dir(tmp)
+
+        results = refresh_all(
+            steering_dir=tmp,
+            fetcher=fetcher,
+            dry_run=dry_run,
+            verbose=False,
+        )
+
+        for catalog, result in zip(CATALOGS, results):
+            assert (tmp / catalog.filename).read_bytes() == originals[catalog.filename]
+            assert result.status == "failed"
+            assert result.error and catalog.source_url in result.error
+            assert "not recognized" in result.error
+
+
+def test_live_vitepress_href_shapes_parse_to_own_constructs_only() -> None:
+    """Hrefs copied from the live ``aws-cdk-lib.aws_lex-readme.html`` page.
+
+    Only the module's own top-level constructs survive: not ``*Props``
+    pages, nested property types, ``interfaces`` reference pages, or
+    another module's constructs.
+    """
+    hrefs = (
+        "/cdk/api/v2/docs/aws-cdk-lib.aws_lex.CfnBot.html",
+        "/cdk/api/v2/docs/aws-cdk-lib.aws_lex.CfnBotAlias.html",
+        "/cdk/api/v2/docs/aws-cdk-lib.aws_lex.CfnBot.AdvancedRecognitionSettingProperty.html",
+        "/cdk/api/v2/docs/aws-cdk-lib.aws_lex.CfnBotProps.html",
+        "/cdk/api/v2/docs/aws-cdk-lib.interfaces.aws_lex.BotReference.html",
+        "/cdk/api/v2/docs/aws-cdk-lib.aws_lexmodelsv2.CfnShadow.html",
+        "/cdk/api/v2/docs/aws-cdk-lib.aws_connect.CfnInstance.html",
+        "/cdk/api/v2/docs/aws-cdk-lib.aws_lex.CfnBot.html#properties",
+    )
+    html = "".join(f'<a href="{h}">x</a>' for h in hrefs)
+
+    links = parse_construct_links(html, "aws_cdk.aws_lex")
+
+    assert [name for name, _ in links] == ["CfnBot", "CfnBotAlias"]
+    assert links[0][1] == (
+        "https://docs.aws.amazon.com/cdk/api/v2/docs/"
+        "aws-cdk-lib.aws_lex.CfnBot.html?lang=python"
+    )
