@@ -49,7 +49,7 @@ root. Report what you verified and what you could not.
    Kiro feature panel. If a server keeps failing on a path that is not
    in the config, tell me to reload the window.
 
-6. Verify. Three suites should pass, 15 tests, then 74, then 53:
+6. Verify. Three suites should pass, 15 tests, then 81, then 53:
    uv run --project .kiro/connect_knowledge_mcp --with pytest --with hypothesis pytest .kiro/scripts/ -q
    uv run --project .kiro/cdk_docs_mcp --with pytest --with hypothesis pytest .kiro/cdk_docs_mcp/cdk_docs/ -q
    uv run --project .kiro/connect_knowledge_mcp --with pytest python -m pytest .kiro/connect_knowledge_mcp/connect_knowledge/ -q
@@ -549,7 +549,7 @@ every description. Details in
 # refresh-script properties, 15 tests, no network
 uv run --project .kiro/connect_knowledge_mcp --with pytest --with hypothesis pytest .kiro/scripts/ -q
 
-# cdk_docs server, 74 tests
+# cdk_docs server, 81 tests
 uv run --project .kiro/cdk_docs_mcp --with pytest --with hypothesis pytest .kiro/cdk_docs_mcp/cdk_docs/ -q
 
 # connect_knowledge server, 53 tests, no network

@@ -87,9 +87,10 @@ to 0.4 seconds. A new index build on the site, which changes the hash in
 
 The WASM module cannot do I/O on its own. Python does every fetch, always
 under `docs.aws.amazon.com/cdk/api/pagefind/`, and checks every hash the
-index returns before putting it into a URL. The code supports Pagefind
-1.5.x; an index built by another version falls back rather than risking
-wrong results.
+index returns before putting it into a URL. The code is tested against
+Pagefind 1.5 and 1.6. It also runs on a later 1.x index and logs one
+warning naming that version; `test_live_fetch.py` checks whether the
+results are still right. A 2.x index, or one older than 1.5, falls back.
 
 If the Pagefind path fails, for example on a network error or a Pagefind
 version change, the tool still answers from the AWS docs search index.
@@ -183,7 +184,7 @@ uv run cdk-construct-doc CfnInstance --library aws_cdk.aws_connect
 uv run --with pytest --with hypothesis pytest cdk_docs/ -q
 ```
 
-74 tests. `hypothesis` is needed because `test_parse_fidelity.py` and
+81 tests. `hypothesis` is needed because `test_parse_fidelity.py` and
 `test_mcp_cli_parity.py` are property-based; without it those two error
 on collection.
 
@@ -245,8 +246,12 @@ Claude Desktop uses the same block in
 - A `search_cdk_docs` reply that starts with `Note: CDK site search
   unavailable (...)`. The Pagefind path could not run and the reply came
   from the docs index fallback. `GET ... failed` is a network error or a
-  moved search index. `the site's Pagefind is version X` means AWS
-  upgraded Pagefind past 1.5.x and `cdk_docs/pagefind.py` needs updating.
+  moved search index. `the site's Pagefind is version X` means AWS moved
+  the site to Pagefind 2.x or later, and the glue in
+  `cdk_docs/pagefind.py` needs porting.
+- A server log warning that the site's Pagefind version has not been
+  tested. Search still runs. Run `test_live_fetch.py`; if it passes, add
+  the version to `TESTED_VERSIONS` in `cdk_docs/pagefind.py`.
   `the wasmtime package is not installed` means the server's environment
   is out of date; run `uv sync` in this folder.
 

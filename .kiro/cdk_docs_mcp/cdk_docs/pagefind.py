@@ -36,9 +36,11 @@ The string glue follows wasm-bindgen: inputs are copied into WASM memory
 through ``__wbindgen_malloc``; string results come back as a
 ``(pointer, length)`` pair that must be released with ``__wbindgen_free``;
 every ``init``/``load`` call returns a new index pointer that replaces the
-old one. That glue is tied to the Pagefind version, so an index built by
-another minor version than ``SUPPORTED_VERSION_PREFIX`` raises
-``PagefindUnavailable`` instead of risking wrong results.
+old one. That glue can change between Pagefind versions. An index built
+by Pagefind 1.x at or above ``MIN_VERSION`` is accepted; a minor version
+outside ``TESTED_VERSIONS`` logs one warning per version and still runs,
+and ``test_live_fetch.py`` is the check that its results are right. Any
+other version, or one that does not parse, raises ``PagefindUnavailable``.
 
 Query preparation and excerpts are ports of ``pagefind.js`` 1.5.2:
 ``normalize_term`` mirrors its punctuation stripping and diacritic
@@ -79,7 +81,13 @@ RESULT_URL_PREFIX = "https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib."
 USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 
 LANGUAGE = "en-us"
-SUPPORTED_VERSION_PREFIX = "1.5."
+# Pagefind (major, minor) versions. The glue is ported from 1.5.2; 1.6.0
+# returned correct scoped, filtered results for all four modules.
+MIN_VERSION = (1, 5)
+SUPPORTED_MAJOR = 1
+TESTED_VERSIONS = frozenset({(1, 5), (1, 6)})
+_VERSION_RE = re.compile(r"^(\d+)\.(\d+)(?:\.\d+)?")
+_warned_versions: set[str] = set()
 EXCERPT_LENGTH = 30  # words, the pagefind.js default
 FRAGMENT_BUDGET_FACTOR = 5  # fragments loaded per requested hit, at most
 FETCH_WORKERS = 8
@@ -453,6 +461,24 @@ _lock = threading.Lock()
 _index: _Index | None = None
 
 
+def _check_version(version: str) -> None:
+    """Raise on a Pagefind version the glue cannot run; warn on an untested one."""
+    match = _VERSION_RE.match(version)
+    parsed = (int(match.group(1)), int(match.group(2))) if match else None
+    if parsed is None or parsed[0] != SUPPORTED_MAJOR or parsed < MIN_VERSION:
+        raise PagefindUnavailable(
+            f"the site's Pagefind is version {version or 'unknown'}; this module "
+            f"supports {MIN_VERSION[0]}.{MIN_VERSION[1]} or later within {SUPPORTED_MAJOR}.x"
+        )
+    if parsed not in TESTED_VERSIONS and version not in _warned_versions:
+        _warned_versions.add(version)
+        logger.warning(
+            "the site's Pagefind is version %s, which this module has not been tested "
+            "against; run test_live_fetch.py and add it to TESTED_VERSIONS",
+            version,
+        )
+
+
 def _read_entry() -> dict:
     """Fetch ``pagefind-entry.json`` and pick the language index."""
     try:
@@ -460,11 +486,7 @@ def _read_entry() -> dict:
     except ValueError as exc:
         raise PagefindUnavailable("pagefind-entry.json is not JSON") from exc
     version = str(entry.get("version") or "")
-    if not version.startswith(SUPPORTED_VERSION_PREFIX):
-        raise PagefindUnavailable(
-            f"the site's Pagefind is version {version or 'unknown'}; this module "
-            f"supports {SUPPORTED_VERSION_PREFIX}x only"
-        )
+    _check_version(version)
     languages = entry.get("languages") or {}
     language = languages.get(LANGUAGE) or max(
         languages.values(), key=lambda lang: lang.get("page_count", 0), default=None

@@ -142,7 +142,7 @@ Run all four before finishing any task that touches Python. Expected
 counts as of the last run:
 
 ```bash
-# cdk_docs server, 74 tests (test_live_fetch.py hits the network, self-skips offline)
+# cdk_docs server, 81 tests (test_live_fetch.py hits the network, self-skips offline)
 uv run --project .kiro/cdk_docs_mcp --with pytest --with hypothesis pytest .kiro/cdk_docs_mcp/cdk_docs/ -q
 
 # connect_knowledge server, 53 tests, offline
@@ -222,10 +222,12 @@ every invocation, FastMCP through `mcp[cli]>=1.14`, `requests`,
 used only by deploy scripts and `refresh_system_prompts.py`. `cdk_docs`
 also depends on `wasmtime`: `cdk_docs/pagefind.py` runs the CDK site's
 own Pagefind search WASM in-process and replays the calls `pagefind.js`
-makes. The wasm-bindgen glue there is tied to Pagefind 1.5.x; when the
-site upgrades, the version check makes `search_cdk_docs` fall back to the
-docs index with a `Note:` line, and `test_live_fetch.py` fails, which is
-the signal to port the glue. Keep the WASM free of imports beyond the one
+makes. The wasm-bindgen glue there is tested against Pagefind 1.5 and
+1.6, listed in `TESTED_VERSIONS`. A later 1.x index still runs and logs
+one warning per version; run `test_live_fetch.py`, and add the version to
+`TESTED_VERSIONS` when it passes. A 2.x index makes `search_cdk_docs`
+fall back to the docs index with a `Note:` line, which is the signal to
+port the glue. Keep the WASM free of imports beyond the one
 it declares, and keep every fetch under `docs.aws.amazon.com/cdk/api/pagefind/`.
 
 No linter or formatter is configured. No `[tool.pytest.ini_options]`

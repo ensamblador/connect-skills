@@ -271,13 +271,40 @@ def test_engine_is_reused_then_rebuilt_on_a_new_index_build(site) -> None:
     assert FakeBackend.instances[1].calls[0] == ("init", b"meta-2")
 
 
-def test_unsupported_version_raises_before_loading_wasm(site) -> None:
+@pytest.mark.parametrize("version", ["2.0.0", "1.4.9", "0.12.0", "", "beta"])
+def test_unsupported_version_raises_before_loading_wasm(site, version) -> None:
     files, fetched = site
-    files["pagefind-entry.json"] = _entry(version="2.0.0")
+    files["pagefind-entry.json"] = _entry(version=version)
 
-    with pytest.raises(pagefind.PagefindUnavailable, match="version 2.0.0"):
+    with pytest.raises(pagefind.PagefindUnavailable, match=f"version {version or 'unknown'};"):
         pagefind.run_pagefind("flow", limit=1)
     assert fetched == ["pagefind-entry.json"]
+
+
+@pytest.mark.parametrize("version", ["1.5.2", "1.6.0"])
+def test_tested_version_runs_without_a_warning(site, version, caplog, monkeypatch) -> None:
+    files, _ = site
+    files["pagefind-entry.json"] = _entry(version=version)
+    monkeypatch.setattr(pagefind, "_warned_versions", set())
+
+    pagefind.run_pagefind("flow", limit=1)
+
+    assert len(FakeBackend.instances) == 1
+    assert not [r for r in caplog.records if r.levelname == "WARNING"]
+
+
+def test_untested_newer_version_runs_and_warns_once(site, caplog, monkeypatch) -> None:
+    files, _ = site
+    files["pagefind-entry.json"] = _entry(version="1.7.1")
+    monkeypatch.setattr(pagefind, "_warned_versions", set())
+
+    pagefind.run_pagefind("flow", limit=1)
+    pagefind.run_pagefind("flow", limit=1)
+
+    assert len(FakeBackend.instances) == 1
+    warnings = [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
+    assert len(warnings) == 1
+    assert "version 1.7.1" in warnings[0] and "TESTED_VERSIONS" in warnings[0]
 
 
 def test_invalid_hash_from_the_index_is_refused(site) -> None:
