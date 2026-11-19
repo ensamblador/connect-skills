@@ -1,7 +1,7 @@
 ---
 inclusion: manual
-last_refreshed: 2026-10-29
-workshop_count: 14
+last_refreshed: 2026-11-17
+workshop_count: 15
 source_urls:
   - https://catalog.workshops.aws/self-service-ai-agents/en-US
   - https://catalog.workshops.aws/amazon-connect-fundamentals/en-US
@@ -20,7 +20,8 @@ source_urls:
   - https://catalog.us-east-1.prod.workshops.aws/workshops/401c630f-2901-4f2d-8468-bd9a9066a78f/en-US
   - https://catalog.us-east-1.prod.workshops.aws/workshops/a0299a82-da56-4bd0-b8cb-d7f76dd42d09/en-US
   - https://catalog.us-east-1.prod.workshops.aws/workshops/f33ac20c-57f6-45ee-89fc-f80c5522e2bf/en-US
-content_checksum: sha256:69cc8e94e73443ec
+  - https://catalog.us-east-1.prod.workshops.aws/workshops/33e6d0e7-f927-4531-abb1-f28a86ba0872/en-US
+content_checksum: sha256:c7271f009544bb4a
 ---
 
 # Amazon Connect workshops & how-to catalog
@@ -131,16 +132,10 @@ JavaScript-rendered and a plain HTTP fetch returns an empty shell.
 - **Modules:**
   - [Introduction](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/1-introduction)
   - [Prerequisites](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/2-prerequisites)
-  - [How It Works — Animations](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/3-how-it-works-animations)
-  - [Outbound Campaigns - Voice](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/4-voice)
-  - [Outbound Campaigns - Digital](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/5-digital)
-  - [Outbound Campaigns - Event-based](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/6-event-based)
-  - [Outbound Campaigns - Preview Dialing](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/7-preview-dialing)
-  - [Outbound Campaigns - Journeys](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/8-journeys)
-  - [Segmentation Deep Dives](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/9-segmentation-deep-dives)
-  - [Agent Dispositions - Step By Step Guides](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/10-agent-dispositions-step-by-step-guides)
+  - [What will you learn?](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/3-what-will-you-learn)
+  - [Choose Your Adventure - Deployment Options](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/4-deployment-options)
   - [Frequently Asked Questions](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/11-faq)
-  - [Other Amazon Connect Training Materials](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/14-amazon-conncet-free-training-materials)
+  - [Other Amazon Connect Training Materials](https://catalog.workshops.aws/amazon-connect-outbound-campaigns/en-US/14-other-amazon-connect-training-materials)
 
 ---
 
@@ -266,3 +261,17 @@ JavaScript-rendered and a plain HTTP fetch returns an empty shell.
     Self-service labs. Builds a generative-AI self-service experience inside SCC-AC using Q in Connect (QiC) on Salesforce knowledge as the LLM-grounded knowledge base. Covers the self-service architecture and prompt engineering, then walks through five labs: (1) wire QiC to Salesforce KB, (2) enable QiC inside an Amazon Lex bot, (3) build the Connect contact flow that calls the QiC-enabled bot, (4) author a Prompt for self-service answers, and (5) stand up a customer-facing chat website. Ends with a live test of the QiC self-service path.
   - **[Module 4: Generative AI powered agent experience](https://catalog.us-east-1.prod.workshops.aws/workshops/f33ac20c-57f6-45ee-89fc-f80c5522e2bf/en-US)**
     Agent-assist labs. Layers Connect's generative-AI agent-experience features on top of the SCC-AC environment from Module 2: post-contact summarization (auto-fill the Salesforce wrap-up screen), Amazon Connect AI Agents for live in-call assistance, and Contact Lens performance evaluations to grade interactions and surface coaching cues. Each feature is enabled, configured in SCC-AC, and exercised on a sample contact so the agent sees the gen-AI output inside the Salesforce omni-channel widget.
+
+---
+
+## Amazon Connect SSO Setup Workshop
+
+- **URL:** https://catalog.us-east-1.prod.workshops.aws/workshops/33e6d0e7-f927-4531-abb1-f28a86ba0872/en-US
+- **One-liner:** Configure SAML 2.0 single sign-on into Amazon Connect through AWS IAM federation, with one standalone track per identity provider: Okta, PingOne, Azure AD, Google Workspace, OneLogin, and AWS IAM Identity Center. Each track takes about 60 minutes. The Connect user name must match the RoleSessionName SAML attribute.
+- **Modules:**
+  - [1. Configure Single Sign-On for Amazon Connect Using Okta](https://catalog.us-east-1.prod.workshops.aws/workshops/33e6d0e7-f927-4531-abb1-f28a86ba0872/en-US/1-sso-amazonconnect-okta)
+  - [2. Configure Single Sign-On for Amazon Connect Using PingOne](https://catalog.us-east-1.prod.workshops.aws/workshops/33e6d0e7-f927-4531-abb1-f28a86ba0872/en-US/2-sso-amazonconnect-pingone)
+  - [3. Configure Single Sign-On for Amazon Connect Using Azure AD](https://catalog.us-east-1.prod.workshops.aws/workshops/33e6d0e7-f927-4531-abb1-f28a86ba0872/en-US/3-sso-amazonconnect-azuread)
+  - [4. Configure Single-Sign-On for Amazon Connect Using Google Workspace](https://catalog.us-east-1.prod.workshops.aws/workshops/33e6d0e7-f927-4531-abb1-f28a86ba0872/en-US/4-sso-amazonconnect-google-workspace)
+  - [5. Configure Single-Sign-On for Amazon Connect Using OneLogin](https://catalog.us-east-1.prod.workshops.aws/workshops/33e6d0e7-f927-4531-abb1-f28a86ba0872/en-US/5-sso-amazonconnect-onelogin)
+  - [6. Configure Single Sign-On for Amazon Connect Using AWS IAM Identity Center](https://catalog.us-east-1.prod.workshops.aws/workshops/33e6d0e7-f927-4531-abb1-f28a86ba0872/en-US/6-sso-amazonconnect-aws-iam-identity-center)

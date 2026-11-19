@@ -37,6 +37,7 @@ Source pages (rendered with Playwright):
         - https://catalog.us-east-1.prod.workshops.aws/workshops/401c630f-2901-4f2d-8468-bd9a9066a78f/en-US
         - https://catalog.us-east-1.prod.workshops.aws/workshops/a0299a82-da56-4bd0-b8cb-d7f76dd42d09/en-US
         - https://catalog.us-east-1.prod.workshops.aws/workshops/f33ac20c-57f6-45ee-89fc-f80c5522e2bf/en-US
+    - https://catalog.us-east-1.prod.workshops.aws/workshops/33e6d0e7-f927-4531-abb1-f28a86ba0872/en-US
 
 Run:
     uv run python .kiro/scripts/refresh_aws_workshops.py            # write
@@ -367,6 +368,21 @@ CURATED: tuple[WorkshopCurated, ...] = (
                     "inside the Salesforce omni-channel widget."
                 ),
             ),
+        ),
+    ),
+    WorkshopCurated(
+        slug="amazon-connect-sso-setup",
+        landing_url=(
+            "https://catalog.us-east-1.prod.workshops.aws/workshops/"
+            "33e6d0e7-f927-4531-abb1-f28a86ba0872/en-US"
+        ),
+        one_liner=(
+            "Configure SAML 2.0 single sign-on into Amazon Connect "
+            "through AWS IAM federation, with one standalone track per "
+            "identity provider: Okta, PingOne, Azure AD, Google "
+            "Workspace, OneLogin, and AWS IAM Identity Center. Each "
+            "track takes about 60 minutes. The Connect user name must "
+            "match the RoleSessionName SAML attribute."
         ),
     ),
 )
